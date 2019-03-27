@@ -1,0 +1,159 @@
+{
+    "name": "server-starter",
+    "displayName": "Just Start",
+    "description": "Web development and debugger using tomcat server in vscode",
+    "version": "0.0.1",
+    "publisher": "Deanly",
+    "engines": {
+        "vscode": "^1.26.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onView:serverExplorer",
+        "onCommand:extension.sayHello"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "server-explorer",
+                    "title": "Package Explorer",
+                    "icon": "media/dep.svg"
+                }
+            ]
+        },
+        "views": {
+            "server-explorer": [
+                {
+                    "id": "propertyExplorer",
+                    "name": "Server Properties"
+                },
+                {
+                    "id": "serverExplorer",
+                    "name": "Server Applications"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "extension.sayHello",
+                "title": "Hello World"
+            },
+            {
+                "command": "propertyExplorer.editEntry",
+                "title": "Edit",
+                "icon": {
+                    "light": "resources/light/edit.svg",
+                    "dark": "resources/dark/edit.svg"
+                }
+            },
+            {
+                "command": "propertyExplorer.refreshEntry",
+                "title": "Refresh",
+                "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "serverExplorer.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "serverExplorer.runEntry",
+                "title": "Run",
+                "icon": {
+                    "light": "resources/light/play.svg",
+                    "dark": "resources/dark/play.svg"
+                }
+            },
+            {
+                "command": "serverExplorer.stopEntry",
+                "title": "Stop",
+                "icon": {
+                    "light": "resources/light/stop.svg",
+                    "dark": "resources/dark/stop.svg"
+                }
+            },
+            {
+                "command": "serverExplorer.addServer",
+                "title": "Add"
+            },
+            {
+                "command": "serverExplorer.selectEntry",
+                "title": "Select"
+            },
+            {
+                "command": "serverExplorer.delServer",
+                "title": "Delete"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "propertyExplorer.refreshEntry",
+                    "when": "view == propertyExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "serverExplorer.addServer",
+                    "when": "view == serverExplorer"
+                },
+                {
+                    "command": "serverExplorer.refresh",
+                    "when": "view == serverExplorer",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "propertyExplorer.editEntry",
+                    "when": "view == propertyExplorer && viewItem == edit",
+                    "group": "inline"
+                },
+                {
+                    "command": "serverExplorer.runEntry",
+                    "when": "view == serverExplorer && viewItem == stop",
+                    "group": "inline"
+                },
+                {
+                    "command": "serverExplorer.stopEntry",
+                    "when": "view == serverExplorer && viewItem == running",
+                    "group": "inline"
+                },
+                {
+                    "command": "serverExplorer.delServer",
+                    "when": "view == serverExplorer && viewItem == stop"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.21",
+        "tslint": "^5.8.0",
+        "@types/node": "^8.10.25",
+        "@types/mocha": "^2.2.42",
+        "@types/mkdirp": "^0.5.2",
+        "@types/rimraf": "^2.0.2"
+    },
+    "dependencies": {
+        "fast-xml-parser": "^3.12.13",
+        "mkdirp": "^0.5.1",
+        "rimraf": "^2.6.3"
+    }
+}
