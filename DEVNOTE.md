@@ -5,7 +5,7 @@
     - [x]Source vaildation 구현
     - [x] os 처리
     - []debug
-        - [] debug button icon
+        - [x] debug button icon
         - [] debug 구현
 - [x]App 의 dispose 호출
     - [x]vscode 가 종료될경우
@@ -14,8 +14,8 @@
 - []Window
     - []QA
 - []README 작성
-- []한국어 추가
-- []Error 처리 개선
+- [x]한국어 추가
+- [x]Error 처리 개선
 - []main icon .png 제작
 - 그 외
     - [x] activate 될때 storage path 없을 경우 처리 추가
