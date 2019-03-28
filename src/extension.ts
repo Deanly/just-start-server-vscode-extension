@@ -87,6 +87,7 @@ export function activate (context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("serverExplorer.delServer", handle((entry: ServerEntry) => serverTreeDataProvider.commandDeleteServer(entry)));
     vscode.commands.registerCommand("serverExplorer.refresh", handle(async () => await serverTreeDataProvider.refresh()));
     vscode.commands.registerCommand("serverExplorer.runEntry", handle((entry: ServerEntry) => { entry.runEntry().then(() => onServerChange.fire(entry)); }));
+    vscode.commands.registerCommand("serverExplorer.debugEntry", handle((entry: ServerEntry) => { entry.runEntry().then(() => onServerChange.fire(entry)); }));
     vscode.commands.registerCommand("serverExplorer.stopEntry", handle((entry: ServerEntry) => entry.stopEntry()));
     vscode.commands.registerCommand("serverExplorer.selectEntry", handle((entry) => serverTreeDataProvider.selectTreeItem(entry)));
 

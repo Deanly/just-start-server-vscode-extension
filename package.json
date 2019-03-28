@@ -1,8 +1,8 @@
 {
-    "name": "server-starter",
-    "displayName": "Just Start",
+    "name": "vscode-just-start-server",
+    "displayName": "Just Start Server",
     "description": "Web development and debugger using tomcat server in vscode",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "publisher": "Deanly",
     "engines": {
         "vscode": "^1.26.0"
@@ -11,22 +11,21 @@
         "Other"
     ],
     "activationEvents": [
-        "onView:serverExplorer",
-        "onCommand:extension.sayHello"
+        "onView:serverExplorer"
     ],
     "main": "./out/src/extension",
     "contributes": {
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "server-explorer",
-                    "title": "Package Explorer",
-                    "icon": "media/dep.svg"
+                    "id": "just-start-server",
+                    "title": "Just Start",
+                    "icon": "media/just-start.svg"
                 }
             ]
         },
         "views": {
-            "server-explorer": [
+            "just-start-server": [
                 {
                     "id": "propertyExplorer",
                     "name": "Server Properties"
@@ -38,10 +37,6 @@
             ]
         },
         "commands": [
-            {
-                "command": "extension.sayHello",
-                "title": "Hello World"
-            },
             {
                 "command": "propertyExplorer.editEntry",
                 "title": "Edit",
@@ -83,6 +78,14 @@
                 }
             },
             {
+                "command": "serverExplorer.debugEntry",
+                "title": "Debug",
+                "icon": {
+                    "light": "resources/dark/debug.svg",
+                    "dark": "resources/dark/debug.svg"
+                }
+            },
+            {
                 "command": "serverExplorer.addServer",
                 "title": "Add"
             },
@@ -120,6 +123,11 @@
                 },
                 {
                     "command": "serverExplorer.runEntry",
+                    "when": "view == serverExplorer && viewItem == stop",
+                    "group": "inline"
+                },
+                {
+                    "command": "serverExplorer.debugEntry",
                     "when": "view == serverExplorer && viewItem == stop",
                     "group": "inline"
                 },
