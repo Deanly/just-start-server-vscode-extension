@@ -2,11 +2,12 @@
 ## v0.1.0
 - []Tomcat
     - [x] 아이콘
-    - [x]Source vaildation 구현
+    - [x] Source vaildation 구현
     - [x] os 처리
     - []debug
         - [x] debug button icon
-        - [] debug 구현
+        - [x] debug 구현
+        - [] test debug
 - [x]App 의 dispose 호출
     - [x]vscode 가 종료될경우
 - []서버 추가 모듈의 다운로드 기능 완성
