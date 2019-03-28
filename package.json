@@ -19,7 +19,7 @@
             "activitybar": [
                 {
                     "id": "just-start-server",
-                    "title": "Just Start",
+                    "title": "Just Start Server",
                     "icon": "media/just-start.svg"
                 }
             ]

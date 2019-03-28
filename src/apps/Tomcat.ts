@@ -3,7 +3,7 @@ import * as path from "path";
 import { fsw, util, network }  from "../core/supports";
 import { IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
 import { ConfigurationAccessor, accessor } from "../core/configuration";
-import { OutputChannel } from "vscode";
+import { OutputChannel, DebugConfiguration, debug, WorkspaceFolder } from "vscode";
 import { ChildProcess } from "child_process";
 
 export default class Tomcat extends ConfigurationAccessor implements IRunnable {
@@ -12,13 +12,14 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     protected readonly CONFIG_FILE_PATH = path.join("conf", "server.xml");
     private _process: ChildProcess|undefined;
 
+    rootPath: string;
     type: AppTypes = AppTypes.TOMCAT;
     status: Status = Status.STOP;
     command: { start: string, stop: string, version: string };
 
     constructor (
         public readonly id: string,
-        private readonly rootPath: string,
+        private readonly workspace: WorkspaceFolder,
     ) {
         super({
             id,
@@ -32,6 +33,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 { key: "SHUTDOWN_PORT", value: "any", changeable: false },
             ]
         });
+        this.rootPath = workspace.uri.path;
         this.command = { start: "", stop: "", version: "" };
     }
 
@@ -100,9 +102,11 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         }
 
         const webapps = path.join(this.getAppPath(), "webapps");
-        await fsw.rmrf(webapps);
-        await fsw.mkdir(webapps);
-        await fsw.copyFile(war, path.join(webapps, "ROOT.war"));
+        await Promise.all([
+            fsw.rmrf(webapps),
+            fsw.mkdir(webapps),
+            fsw.copyFile(war, path.join(webapps, "ROOT.war")),
+        ]);
 
         return void 0;
     }
@@ -111,23 +115,26 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         await this.stop();
     }
 
+    private async _prepareTomcat (ports: Array<number>): Promise<void> {
+        const serverxml = new ServerXmlAdapter(path.join(this.getAppPath(), this.CONFIG_FILE_PATH));
+        await serverxml.load();
+        serverxml.port = this.getProperty("port")!.value;
+        serverxml.ajp_port = ports[0].toString();
+        serverxml.redirect_port = ports[1].toString();
+        serverxml.shutdown_port = ports[2].toString();
+        await serverxml.save();
+
+        await this.saveConfigProperties([
+            { key: "SHUTDOWN_PORT", value: ports[2].toString() },
+            { key: "AJP_PORT", value: ports[0].toString() },
+            { key: "REDIRECT_PORT", value: ports[1].toString() }
+        ], true);
+    }
+
     async start (outputChannel: OutputChannel): Promise<void> {
-        // if (await !fsw.readable(this.command.start)) { throw ApplicationError.InaccessibleResources(); }
         try {
             const ports = await network.getAvailablePorts(3);
-            const serverxml = new ServerXmlAdapter(path.join(this.getAppPath(), this.CONFIG_FILE_PATH));
-            await serverxml.load();
-            serverxml.port = this.getProperty("port")!.value;
-            serverxml.ajp_port = ports[0].toString();
-            serverxml.redirect_port = ports[1].toString();
-            serverxml.shutdown_port = ports[2].toString();
-            await serverxml.save();
-
-            await this.saveConfigProperties([
-                { key: "SHUTDOWN_PORT", value: ports[2].toString() },
-                { key: "AJP_PORT", value: ports[0].toString() },
-                { key: "REDIRECT_PORT", value: ports[1].toString() }
-            ], true);
+            await this._prepareTomcat(ports);
         } catch (e) {
             console.error(e);
             return Promise.reject(e);
@@ -135,51 +142,27 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         await this.execProcess(outputChannel);
     }
 
-    async stop (outputChannel?: OutputChannel): Promise<void> {
-        // if (await !fsw.readable(this.command.stop)) { throw ApplicationError.InaccessibleResources(); }
-        if (!this._process) { throw new Error("에러처리"); }
-        let trying = 0, succeed = false, err;
-        while (!succeed) {
-            try {
-                this._process.kill();
-                if (this._process.killed) {
-                    succeed = true;
-                    if (outputChannel) {
-                        outputChannel.appendLine("stopped server.");
-                    }
-                }
-            } catch (e) {
-                err = e;
-                console.log("error", trying++);
-                if (trying > 4) { return Promise.reject(err); }
-                else { await util.setTimeoutPromise(() => {}, 3000); }
-            }
-        }
-        Promise.resolve(void 0);
-    }
-
     async debug (outputChannel: OutputChannel): Promise<void> {
         let ports;
         try {
             ports = await network.getAvailablePorts(4);
-            const serverxml = new ServerXmlAdapter(path.join(this.getAppPath(), this.CONFIG_FILE_PATH));
-            await serverxml.load();
-            serverxml.port = this.getProperty("port")!.value;
-            serverxml.ajp_port = ports[0].toString();
-            serverxml.redirect_port = ports[1].toString();
-            serverxml.shutdown_port = ports[2].toString();
-            await serverxml.save();
-
-            await this.saveConfigProperties([
-                { key: "SHUTDOWN_PORT", value: ports[2].toString() },
-                { key: "AJP_PORT", value: ports[0].toString() },
-                { key: "REDIRECT_PORT", value: ports[1].toString() }
-            ], true);
+            await this._prepareTomcat(ports);
         } catch (e) {
             console.error(e);
             return Promise.reject(e);
         }
+
         await this.execProcess(outputChannel, ports[3]);
+
+        const config: DebugConfiguration = {
+            type: "java",
+            name: `debug_${this.getName()}`,
+            request: "attach",
+            hostName: "localhost",
+            port: ports[3]
+        };
+
+        setTimeout(() => debug.startDebugging(this.workspace, config), 400);
     }
 
     async execProcess (outputChannel: OutputChannel, debugPort?: number): Promise<void> {
@@ -201,6 +184,28 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         args.push("org.apache.catalina.startup.Bootstrap \"$@\"");
 
         this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel);
+    }
+
+    async stop (outputChannel?: OutputChannel): Promise<void> {
+        if (!this._process) { throw ApplicationError.FatalFailure; }
+        let trying = 0, succeed = false, err;
+        while (!succeed) {
+            try {
+                this._process.kill();
+                if (this._process.killed) {
+                    succeed = true;
+                    if (outputChannel) {
+                        outputChannel.appendLine("stopped server.");
+                    }
+                }
+            } catch (e) {
+                err = e;
+                trying++;
+                if (trying > 4) { return Promise.reject(err); }
+                else { await util.setTimeoutPromise(() => {}, 3000); }
+            }
+        }
+        Promise.resolve(void 0);
     }
 
     getStatus (): Status {

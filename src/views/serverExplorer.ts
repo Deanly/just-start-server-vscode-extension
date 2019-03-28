@@ -71,7 +71,7 @@ export class ServerEntry extends vscode.TreeItem {
         this.onDidChangeTreeData.fire(this);
     }
 
-    async runEntry (): Promise<void> {
+    async runEntry (isDebug: boolean): Promise<void> {
         const prevStatus = this.server.status;
         try {
             if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw ApplicationError.NotAvailablePort; }
@@ -82,7 +82,11 @@ export class ServerEntry extends vscode.TreeItem {
             await this.server.deploy();
             await util.setTimeoutPromise(() => {}, 2000);
             this.outputChannel.clear();
-            await this.server.start(this.outputChannel);
+            if (isDebug) {
+                await this.server.debug(this.outputChannel);
+            } else {
+                await this.server.start(this.outputChannel);
+            }
             await util.setTimeoutPromise(() => {}, 3000);
             this.server.status = Status.RUNNING;
         } catch (e) {
