@@ -7,17 +7,25 @@
     - []debug
         - [x] debug button icon
         - [x] debug 구현
-        - [] test debug
+        - [x] test debug
+    - deploy
+        - [] java build 개발 (mvn package 치기 물편함)
+        - [] 자동 빌드도 가능?
+        - [] 서버 restart 제공
+            - [] 접근성 향상 (icon 이나 단축키)
+- console
+    - [] 새로운 push 오면 아래로 고정되도록
+    - [] 색상 지원 여부
 - [x]App 의 dispose 호출
     - [x]vscode 가 종료될경우
 - []서버 추가 모듈의 다운로드 기능 완성
-    - []interface frame 재설계 필요 
+    - [] interface frame 재설계 필요 
 - []Window
     - []QA
 - []README 작성
 - [x]한국어 추가
 - [x]Error 처리 개선
-- []main icon .png 제작
+- [x]main icon .png 제작
 - 그 외
     - [x] activate 될때 storage path 없을 경우 처리 추가
     - [x] version 보기 추가
