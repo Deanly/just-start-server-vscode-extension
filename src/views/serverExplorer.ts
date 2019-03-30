@@ -90,8 +90,9 @@ export class ServerEntry extends vscode.TreeItem {
             await util.setTimeoutPromise(() => {}, 3000);
             this.server.status = Status.RUNNING;
         } catch (e) {
-            vscode.window.showErrorMessage(e);
+            this.busy = false;
             this.server.status = prevStatus;
+            throw e;
         }
         this.redraw();
         this.busy = false;
@@ -108,8 +109,9 @@ export class ServerEntry extends vscode.TreeItem {
             await util.setTimeoutPromise(() => {}, 1000);
             this.server.status = Status.STOP;
         } catch (e) {
-            vscode.window.showErrorMessage(e);
+            this.busy = false;
             this.server.status = prevStatus;
+            throw e;
         }
 
         this.redraw();

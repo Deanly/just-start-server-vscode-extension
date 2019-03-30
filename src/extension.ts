@@ -27,15 +27,15 @@ export function activate (context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.window.registerTreeDataProvider("propertyExplorer", propertyTreeDataProvider));
     context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.editEntry", handle(async (entry: PropertyEntry) => await entry.changeValue())));
-    context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.refreshEntry", handle(() => propertyTreeDataProvider.refresh())));
+    context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.refreshEntry", handle(async () => await propertyTreeDataProvider.refresh())));
 
     context.subscriptions.push(vscode.window.registerTreeDataProvider("serverExplorer", serverTreeDataProvider));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.addServer", handle(() => serverTreeDataProvider.commandAddTreeItem())));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.delServer", handle((entry: ServerEntry) => serverTreeDataProvider.commandDeleteServer(entry))));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.addServer", handle(async () => await serverTreeDataProvider.commandAddTreeItem())));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.delServer", handle(async (entry: ServerEntry) => await serverTreeDataProvider.commandDeleteServer(entry))));
     context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.refresh", handle(async () => await serverTreeDataProvider.refresh())));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.runEntry", handle((entry: ServerEntry) => { entry.runEntry(false).then(() => onServerChange.fire(entry)); })));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.debugEntry", handle((entry: ServerEntry) => { entry.runEntry(true).then(() => onServerChange.fire(entry)); })));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.stopEntry", handle((entry: ServerEntry) => entry.stopEntry())));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.runEntry", handle(async (entry: ServerEntry) => { await entry.runEntry(false).then(() => onServerChange.fire(entry)); })));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.debugEntry", handle(async (entry: ServerEntry) => { await entry.runEntry(true).then(() => onServerChange.fire(entry)); })));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.stopEntry", handle(async (entry: ServerEntry) => await entry.stopEntry())));
     context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.selectEntry", handle((entry) => serverTreeDataProvider.selectTreeItem(entry))));
 
     setTimeout(() => serverTreeDataProvider.refresh(), 500);
@@ -62,24 +62,24 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
     app.container.loadFromConfigurations();
 }
 
-function handle(exec: (...args: any) => any): any {
-    function hError(e: Error) {
-        console.error(e);
+function hError(e: Error) {
+    console.error(e);
 
-        if (e === config.ConfigurationError.BrokenConfigFile) {
-            vscode.window.showErrorMessage(e.toString());
-            config.accessor.reset()
-                .then(() => {
-                    app.container.reset();
-                    serverTreeDataProvider.refresh();
-                    propertyTreeDataProvider.refresh();
-                });
-        } else {
-            vscode.window.showErrorMessage(e.toString());
-        }
+    if (e === config.ConfigurationError.BrokenConfigFile) {
+        vscode.window.showErrorMessage(e.toString());
+        config.accessor.reset()
+            .then(() => {
+                app.container.reset();
+                serverTreeDataProvider.refresh();
+                propertyTreeDataProvider.refresh();
+            });
+    } else {
+        vscode.window.showErrorMessage(e.toString());
     }
+}
 
-    return (...args: any) => {
+function handle(exec: (...args: Array<any>) => any): any {
+    return (...args: Array<any>) => {
         try {
             const out = exec.apply({}, args);
             if (out instanceof Promise) {

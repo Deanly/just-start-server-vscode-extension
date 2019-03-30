@@ -102,11 +102,9 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         }
 
         const webapps = path.join(this.getAppPath(), "webapps");
-        await Promise.all([
-            fsw.rmrf(webapps),
-            fsw.mkdir(webapps),
-            fsw.copyFile(war, path.join(webapps, "ROOT.war")),
-        ]);
+        await fsw.rmrf(webapps);
+        await fsw.mkdir(webapps);
+        await fsw.copyFile(war, path.join(webapps, "ROOT.war"));
 
         return void 0;
     }
@@ -165,16 +163,16 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         setTimeout(() => debug.startDebugging(this.workspace, config), 400);
     }
 
-    async execProcess (outputChannel: OutputChannel, debugPort?: number): Promise<void> {
+    private async execProcess (outputChannel: OutputChannel, debugPort?: number): Promise<void> {
         const args = [
             `-classpath "${path.join(this.getAppPath(), "bin", "bootstrap.jar")}${path.delimiter}${path.join(this.getAppPath(), "bin", "tomcat-juli.jar")}"`,
             `-Dcatalina.base="${this.getAppPath()}"`,
             `-Dcatalina.home="${this.getAppPath()}"`,
             `-Dfile.encoding=UTF8`,
             // `--illegal-access=warn`,
-            `--add-opens=java.base/java.lang=ALL-UNNAMED`,
-            `--add-opens=java.base/java.io=ALL-UNNAMED`,
-            `--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED`,
+            // `--add-opens=java.base/java.lang=ALL-UNNAMED`,
+            // `--add-opens=java.base/java.io=ALL-UNNAMED`,
+            // `--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED`,
         ];
 
         if (debugPort) {

@@ -210,16 +210,13 @@ export namespace network {
     }
 
     export async function checkAvailablePort(port: number): Promise<boolean> {
-        console.log("Check available port!!", port);
         return await new Promise<boolean>((resolve) => {
             const tester = net.createServer()
                 .once("error", (err: any) => {
-                    console.log(port, "===> error", err);
                     if (err.code === "EADDRINUSE") { return resolve(false); }
                     resolve(false);
                 })
                 .once("listening", () => {
-                    console.log(port, "===> listening!!!")
                     tester.once("close", () => { resolve(true); })
                         .close();
                 })
