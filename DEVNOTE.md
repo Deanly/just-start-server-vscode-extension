@@ -11,6 +11,7 @@
     - deploy
         - [] java build 개발 (mvn package 치기 물편함)
         - [] 자동 빌드도 가능?
+        - [] 배포파일 경로 심볼릭 설정
         - [] 서버 restart 제공
             - [] 접근성 향상 (icon 이나 단축키)
 - console
