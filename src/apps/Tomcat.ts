@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { fsw, util, network }  from "../core/supports";
+import { fsw, util, network } from "../core/supports";
 import { IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
 import { ConfigurationAccessor, accessor } from "../core/configuration";
 import { OutputChannel, DebugConfiguration, debug, WorkspaceFolder } from "vscode";
@@ -10,14 +10,14 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     static readonly countOfAvailablePorts = 3;
 
     protected readonly CONFIG_FILE_PATH = path.join("conf", "server.xml");
-    private _process: ChildProcess|undefined;
+    private _process: ChildProcess | undefined;
 
     rootPath: string;
     type: AppTypes = AppTypes.TOMCAT;
     status: Status = Status.STOP;
     command: { start: string, stop: string, version: string };
 
-    constructor (
+    constructor(
         public readonly id: string,
         private readonly workspace: WorkspaceFolder,
     ) {
@@ -37,7 +37,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         this.command = { start: "", stop: "", version: "" };
     }
 
-    async init (): Promise<void> {
+    async init(): Promise<void> {
         if (util.getOsType() === util.OsType.WINDOWS_NT) {
             this.command = {
                 start: path.join(this.getAppPath(), "bin", "startup.bat"),
@@ -58,7 +58,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         return void 0;
     }
 
-    getIconPath (asAbsolutePath: (relativePath: string) => string) {
+    getIconPath(asAbsolutePath: (relativePath: string) => string) {
         switch (this.status) {
             case Status.PREPARING: return {
                 dark: asAbsolutePath(path.join("resources", "dark", "tomcat", "preparing.svg")),
@@ -76,7 +76,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         }
     }
 
-    async findVersion (): Promise<string> {
+    async findVersion(): Promise<string> {
         const output: Array<string> = [];
         await util.executeChildProcess(this.command.version, { shell: true }, [], output);
 
@@ -87,7 +87,15 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         return Promise.reject(new Error("Not found server version number"));
     }
 
-    async deploy (): Promise<void> {
+    async packageByMaven(): Promise<void> {
+
+    }
+
+    async packageByGradle(): Promise<void> {
+
+    }
+
+    async deploy(): Promise<void> {
         let war = path.join(this.rootPath, this.getProperty("war_path")!.value);
         if (!(await fsw.readable(war))) {
             if (await fsw.readable(path.join(this.rootPath, "target"))) {
@@ -97,6 +105,8 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                     war = path.join(this.rootPath, this.getProperty("war_path")!.value);
                 } else {
                     throw ApplicationError.NotFoundTargetDeploy;
+
+                    // util.executeChildProcess()
                 }
             }
         }
@@ -109,11 +119,11 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         return void 0;
     }
 
-    async dispose (): Promise<void> {
+    async dispose(): Promise<void> {
         await this.stop();
     }
 
-    private async _prepareTomcat (ports: Array<number>): Promise<void> {
+    private async _prepareTomcat(ports: Array<number>): Promise<void> {
         const serverxml = new ServerXmlAdapter(path.join(this.getAppPath(), this.CONFIG_FILE_PATH));
         await serverxml.load();
         serverxml.port = this.getProperty("port")!.value;
@@ -129,7 +139,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         ], true);
     }
 
-    async start (outputChannel: OutputChannel): Promise<void> {
+    async start(outputChannel: OutputChannel): Promise<void> {
         try {
             const ports = await network.getAvailablePorts(3);
             await this._prepareTomcat(ports);
@@ -140,7 +150,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         await this.execProcess(outputChannel);
     }
 
-    async debug (outputChannel: OutputChannel): Promise<void> {
+    async debug(outputChannel: OutputChannel): Promise<void> {
         let ports;
         try {
             ports = await network.getAvailablePorts(4);
@@ -163,7 +173,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         setTimeout(() => debug.startDebugging(this.workspace, config), 400);
     }
 
-    private async execProcess (outputChannel: OutputChannel, debugPort?: number): Promise<void> {
+    private async execProcess(outputChannel: OutputChannel, debugPort?: number): Promise<void> {
         const args = [
             `-classpath "${path.join(this.getAppPath(), "bin", "bootstrap.jar")}${path.delimiter}${path.join(this.getAppPath(), "bin", "tomcat-juli.jar")}"`,
             `-Dcatalina.base="${this.getAppPath()}"`,
@@ -184,7 +194,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel);
     }
 
-    async stop (outputChannel?: OutputChannel): Promise<void> {
+    async stop(outputChannel?: OutputChannel): Promise<void> {
         if (!this._process) { throw ApplicationError.FatalFailure; }
         let trying = 0, succeed = false, err;
         while (!succeed) {
@@ -200,21 +210,21 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 err = e;
                 trying++;
                 if (trying > 4) { return Promise.reject(err); }
-                else { await util.setTimeoutPromise(() => {}, 3000); }
+                else { await util.setTimeoutPromise(() => { }, 3000); }
             }
         }
         Promise.resolve(void 0);
     }
 
-    getStatus (): Status {
+    getStatus(): Status {
         return this.status;
     }
 
-    getServicePort (): number {
+    getServicePort(): number {
         return parseInt(this.getProperty("port")!.value);
     }
 
-    async validateSource (version?: string): Promise<boolean> {
+    async validateSource(version?: string): Promise<boolean> {
         try {
             if (!(await fsw.readable(path.join(this.getAppPath(), "bin")))) { return false; }
             if (!(await fsw.readable(path.join(this.getAppPath(), "bin", "bootstrap.jar")))) { return false; }
@@ -255,56 +265,56 @@ interface ServerXmlData {
 class ServerXmlAdapter {
     private _data?: ServerXmlData;
 
-    constructor (
+    constructor(
         public readonly confPath: string
     ) {
     }
 
-    async load (): Promise<void> {
+    async load(): Promise<void> {
         this._data = await accessor.readXmlFile<ServerXmlData>(this.confPath, xmlOptions);
     }
 
-    async save (): Promise<void> {
+    async save(): Promise<void> {
         if (!this._data) { throw ApplicationError.NotReady; }
         return await accessor.writeXmlFile<ServerXmlData>(this.confPath, this._data, xmlOptions);
     }
 
-    get port (): string {
+    get port(): string {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
         if (!connector) { throw ApplicationError.InvalidInternalResource; }
         return connector._$_port;
     }
 
-    set port (v: string) {
+    set port(v: string) {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
         if (!connector) { throw ApplicationError.InvalidInternalResource; }
         connector._$_port = v;
     }
 
-    get ajp_port (): string {
+    get ajp_port(): string {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
         if (!connector) { throw ApplicationError.InvalidInternalResource; }
         return connector._$_port;
     }
 
-    set ajp_port (v: string) {
+    set ajp_port(v: string) {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
         if (!connector) { throw ApplicationError.InvalidInternalResource; }
         connector._$_port = v;
     }
 
-    get redirect_port (): string {
+    get redirect_port(): string {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connector = this._data.Server.Service.Connector[0];
         if (!connector) { throw ApplicationError.InvalidInternalResource; }
         return connector._$_redirectPort;
     }
 
-    set redirect_port (v: string) {
+    set redirect_port(v: string) {
         if (!this._data) { throw ApplicationError.NotReady; }
         const connectors = this._data.Server.Service.Connector.filter(c => c._$_protocol.startsWith("AJP"));
         if (connectors.length === 0) { throw ApplicationError.InvalidInternalResource; }
@@ -313,12 +323,12 @@ class ServerXmlAdapter {
         }
     }
 
-    get shutdown_port (): string {
+    get shutdown_port(): string {
         if (!this._data) { throw ApplicationError.NotReady; }
         return this._data.Server._$_port;
     }
 
-    set shutdown_port (v: string) {
+    set shutdown_port(v: string) {
         if (!this._data) { throw ApplicationError.NotReady; }
         this._data.Server._$_port = v;
     }
