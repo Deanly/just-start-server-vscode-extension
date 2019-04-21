@@ -1,6 +1,8 @@
 out
 node_modules
 .vscode-test/
+test/apps/*
+test/demo/*
 *.vsix
 .idea/
 .settings/

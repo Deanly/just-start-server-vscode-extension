@@ -264,7 +264,7 @@ export namespace util {
                 });
             } else {
                 process.stdout.on("data", (data: string | Buffer): void => {
-                    console.log("data", data);
+                    // console.log("data", data);
                     out.push(data.toString());
                 });
             }
@@ -281,6 +281,7 @@ export namespace util {
             });
             process.on("exit", (code: number) => {
                 if (code !== 0) {
+                    console.log(out.join(""));
                     reject(new Error(`Failed execute child process ${code}`));
                 } else {
                     resolve(process);

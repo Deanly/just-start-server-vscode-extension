@@ -57,7 +57,7 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
         setTimeout(() => initialize(context, --n), 100);
         return void 0;
     }
-    app.container.initialize(vscode.workspace.workspaceFolders![0]);
+    app.container.initialize(vscode.workspace.workspaceFolders![0].uri);
     config.accessor.initialize(context.storagePath);
     app.container.loadFromConfigurations();
 }

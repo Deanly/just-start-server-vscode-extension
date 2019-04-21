@@ -170,6 +170,11 @@ suite("core.configuration", function () {
 
 
 import * as here2 from "../src/core/application";
+import { Uri } from "vscode";
+
+const tomcatPathForTest = path.join(__dirname, "..", "..", "test", "apps", "apache-tomcat-8.5.28");
+
+here2.container.initialize(Uri.file(__dirname));
 
 suite("core.configuration dependent core.application", function () {
 
@@ -177,7 +182,7 @@ suite("core.configuration dependent core.application", function () {
         await here.accessor.detachConfigApplication("testInstance");
         const ins = new TestIns();
         ins.config.type = here2.AppTypes[here2.AppTypes.TOMCAT];
-        ins.config.appPath = "/123";
+        ins.config.appPath = tomcatPathForTest;
         await ins.saveConfig();
     });
 
