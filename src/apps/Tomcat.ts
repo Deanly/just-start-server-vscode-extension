@@ -3,7 +3,7 @@ import * as path from "path";
 import { fsw, util, network } from "../core/supports";
 import { IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
 import { ConfigurationAccessor, accessor } from "../core/configuration";
-import { OutputChannel, DebugConfiguration, debug, WorkspaceFolder } from "vscode";
+import { OutputChannel, DebugConfiguration, debug, workspace, Uri } from "vscode";
 import { ChildProcess } from "child_process";
 
 export default class Tomcat extends ConfigurationAccessor implements IRunnable {
@@ -19,7 +19,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
     constructor(
         public readonly id: string,
-        private readonly workspace: WorkspaceFolder,
+        private readonly workspaceUri: Uri,
     ) {
         super({
             id,
@@ -33,7 +33,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 { key: "SHUTDOWN_PORT", value: "any", changeable: false },
             ]
         });
-        this.rootPath = workspace.uri.path;
+        this.rootPath = workspaceUri.path;
         this.command = { start: "", stop: "", version: "" };
     }
 
@@ -87,16 +87,29 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         return Promise.reject(new Error("Not found server version number"));
     }
 
-    async packageByMaven(): Promise<void> {
+    async packageByMaven(): Promise<string> {
+        const output: Array<string> = [];
+        await util.executeChildProcess("mvn", { shell: true }, ["package", `--file=${this.workspaceUri.path}`], output);
 
+        // a.split('\n').find(str => str.match(/Building war/)).split(' ')[3]
+
+        const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
+        if (!findWarLine) { throw new Error("Packaging Failed"); }
+        const words = findWarLine.split(" ");
+
+        console.log("package war path :", words[words.length - 1]);
+        return words[words.length - 1];
     }
 
-    async packageByGradle(): Promise<void> {
-
+    async packageByGradle(): Promise<string> {
+        return "";
     }
 
     async deploy(): Promise<void> {
-        let war = path.join(this.rootPath, this.getProperty("war_path")!.value);
+        let war = await this.packageByMaven();
+        if (!war) { war = await this.packageByGradle(); }
+        if (!war) { war = path.join(this.rootPath, this.getProperty("war_path")!.value); }
+
         if (!(await fsw.readable(war))) {
             if (await fsw.readable(path.join(this.rootPath, "target"))) {
                 const filename = (await fsw.readdir(path.join(this.rootPath, "target"))).find(n => n.endsWith(".war"));
@@ -170,7 +183,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             port: ports[3]
         };
 
-        setTimeout(() => debug.startDebugging(this.workspace, config), 400);
+        setTimeout(() => debug.startDebugging(workspace.getWorkspaceFolder(this.workspaceUri), config), 400);
     }
 
     private async execProcess(outputChannel: OutputChannel, debugPort?: number): Promise<void> {

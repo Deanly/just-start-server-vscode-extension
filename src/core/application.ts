@@ -4,7 +4,7 @@ import { ConfigurationAccessor, accessor, ConfigApplication } from "./configurat
 
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
-import { OutputChannel, WorkspaceFolder } from "vscode";
+import { OutputChannel, WorkspaceFolder, Uri } from "vscode";
 import { getMessage } from "../messages";
 
 /**
@@ -62,7 +62,7 @@ export interface IRunnable {
 
 export async function validateExecutableApplication(type: AppTypes, path: string, version?: string) {
     const App: any = findClassModule(type);
-    const app = new App("xx", container.getAppWorkspace()) as (IRunnable & ConfigurationAccessor);
+    const app = new App("xx", container.getWorkspaceUri()) as (IRunnable & ConfigurationAccessor);
     app.config.appPath = path;
     if (app.validateSource) {
         return await app.validateSource(version);
@@ -98,15 +98,15 @@ export class ApplicationError extends Error {
 }
 
 export namespace container {
-    let workspace: WorkspaceFolder;
+    let uri: Uri;
     const _cache: (IRunnable & ConfigurationAccessor)[] = [];
 
-    export function initialize(_workspace: WorkspaceFolder): void {
-        workspace = _workspace;
+    export function initialize(_uri: Uri): void {
+        uri = _uri;
     }
 
-    export function getAppWorkspace() {
-        return workspace;
+    export function getWorkspaceUri() {
+        return uri;
     }
 
     export function reset() {
@@ -114,10 +114,10 @@ export namespace container {
     }
 
     export async function createApplication(type: AppTypes, id?: string): Promise<IRunnable & ConfigurationAccessor> {
-        if (!workspace) { throw ApplicationError.NotFoundWorkspace; }
+        if (!uri) { throw ApplicationError.NotFoundWorkspace; }
         id = id || "App" + Date.now();
         const App: any = findClassModule(type);
-        return new App(id, workspace);
+        return new App(id, uri);
     }
 
     export async function loadFromConfigurations(exactly?: boolean): Promise<void> {
