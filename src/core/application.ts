@@ -4,7 +4,7 @@ import { ConfigurationAccessor, accessor, ConfigApplication } from "./configurat
 
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
-import { OutputChannel, WorkspaceFolder, Uri } from "vscode";
+import { OutputChannel, Uri } from "vscode";
 import { getMessage } from "../messages";
 
 /**

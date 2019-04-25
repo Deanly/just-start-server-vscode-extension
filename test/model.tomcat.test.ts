@@ -3,7 +3,7 @@ import path from "path";
 
 import Tomcat from "../src/apps/Tomcat";
 
-const demoPomProject = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "sample-java-war-hello"));
+const demoPomProject = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "sample-java war-hello"));
 const appTomcat8 = path.join(__dirname, "..", "..", "test", "apps", "apache-tomcat-8.5.28");
 
 suite("apps.tomcat", function () {
@@ -16,7 +16,9 @@ suite("apps.tomcat", function () {
         properties: []
     });
 
+
     test("deploy", async function () {
+        await tomcat.saveConfig();
         await tomcat.deploy();
     }).timeout(10000);
 });
