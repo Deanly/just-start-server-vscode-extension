@@ -89,16 +89,13 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
     async packageByMaven(): Promise<string> {
         const output: Array<string> = [];
-        await util.executeChildProcess("mvn", { shell: true }, ["package", `--file=${this.workspaceUri.path}`], output);
-
-        // a.split('\n').find(str => str.match(/Building war/)).split(' ')[3]
+        await util.executeChildProcess("mvn", { shell: true }, ["package", `--file="${this.workspaceUri.path}"`], output);
 
         const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
         if (!findWarLine) { throw new Error("Packaging Failed"); }
-        const words = findWarLine.split(" ");
 
-        console.log("package war path :", words[words.length - 1]);
-        return words[words.length - 1];
+        const words = findWarLine.split(":");
+        return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
     }
 
     async packageByGradle(): Promise<string> {
