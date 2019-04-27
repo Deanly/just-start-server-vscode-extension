@@ -182,6 +182,40 @@ export namespace fsw {
                 .then(() => handleResult(resolve, reject, undefined, void 0));
         });
     }
+
+    export function findFilePath(basedir: string, filename: string ): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let result: string | undefined;
+            const recursive = async function (_path: string): Promise<void> {
+                if (result) { return void 0; }
+
+                if (!await readable(path.join(_path, filename))) {
+                    const arr = await readdir(_path);
+
+                    for (let i = 0; i < arr.length; i++) {
+                        if (arr[i].startsWith(".")) { continue; }
+
+                        if (isDirSync(path.join(_path, arr[i]))) {
+                            await recursive(path.join(_path, arr[i]));
+                        } else {
+                            if (filename.startsWith("*")) {
+                                if (arr[i].endsWith(filename.replace(/\**/, ""))) {
+                                    result = path.join(_path, arr[i]);
+                                    return void 0;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    result = path.join(_path, filename);
+                    return void 0;
+                }
+            };
+            recursive(basedir)
+                .catch(err => handleResult(resolve, reject, err, void 0))
+                .then(() => handleResult(resolve, reject, undefined, result));
+        });
+    }
 }
 
 export namespace network {
@@ -254,7 +288,7 @@ export namespace util {
     export async function executeChildProcess(command: string, options: SpawnOptions, args: string[], out: Array<string>, outputPane?: vscode.OutputChannel): Promise<ChildProcess> {
         return await new Promise<ChildProcess>((resolve, reject) => {
             let stderr: string = "";
-            console.log(command, args, options, command.replace(" ", "\\ "));
+            console.log("-supports command-> ", command, args.join(" "), options, command.replace(" ", "\\ "));
             const process = spawn(command.replace(" ", "\\ "), args, options);
             if (outputPane) {
                 outputPane.show();
