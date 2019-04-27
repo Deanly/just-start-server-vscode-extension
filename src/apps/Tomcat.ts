@@ -15,7 +15,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     rootPath: string;
     type: AppTypes = AppTypes.TOMCAT;
     status: Status = Status.STOP;
-    command: { start: string, stop: string, version: string };
+    command: { start: string, stop: string, version: string, maven: string, gradle: string };
 
     constructor(
         public readonly id: string,
@@ -34,7 +34,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             ]
         });
         this.rootPath = workspaceUri.path;
-        this.command = { start: "", stop: "", version: "" };
+        this.command = { start: "", stop: "", version: "", maven: "", gradle: "" };
     }
 
     async init(): Promise<void> {
@@ -43,12 +43,16 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 start: path.join(this.getAppPath(), "bin", "startup.bat"),
                 stop: path.join(this.getAppPath(), "bin", "shutdown.bat"),
                 version: path.join(this.getAppPath(), "bin", "version.bat"),
+                maven: "mvn",
+                gradle: path.join(this.rootPath, "gradlew.bat"),
             };
         } else {
             this.command = {
                 start: path.join(this.getAppPath(), "bin", "startup.sh"),
                 stop: path.join(this.getAppPath(), "bin", "shutdown.sh"),
                 version: path.join(this.getAppPath(), "bin", "version.sh"),
+                maven: "mvn",
+                gradle: path.join(this.rootPath, "gradlew"),
             };
         }
         this.setVersion(await this.findVersion());
@@ -88,18 +92,36 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     async packageByMaven(): Promise<string> {
-        const output: Array<string> = [];
-        await util.executeChildProcess("mvn", { shell: true }, ["package", `--file="${this.workspaceUri.path}"`], output);
+        try {
+            const output: Array<string> = [];
+            await util.executeChildProcess(this.command.maven, { shell: true }, ["package", `--file="${this.workspaceUri.path}"`], output);
 
-        const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
-        if (!findWarLine) { throw new Error("Packaging Failed"); }
+            const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
+            if (!findWarLine) { throw new Error("Packaging Failed"); }
 
-        const words = findWarLine.split(":");
-        return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
+            const words = findWarLine.split(":");
+            return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
     }
 
     async packageByGradle(): Promise<string> {
-        return "";
+        try {
+            const output: Array<string> = [];
+            const buildGradle = (await fsw.readfile(path.join(this.rootPath, "build.gradle"))).toString();
+
+            if (buildGradle.replace(/(\')|(\")|(\s)/gi, "").match(/applyplugin:war/)) {
+                await util.executeChildProcess(this.command.gradle, { shell: true }, ["build", `-b="${path.join(this.rootPath, "build.gradle")}"`], output);
+                return await fsw.findFilePath(path.join(this.rootPath), "*.war");
+            } else {
+                return "";
+            }
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
     }
 
     async deploy(): Promise<void> {
@@ -120,6 +142,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 }
             }
         }
+        console.debug("package war path", war);
 
         const webapps = path.join(this.getAppPath(), "webapps");
         await fsw.rmrf(webapps);
