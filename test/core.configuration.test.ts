@@ -149,20 +149,9 @@ suite("core.configuration", function () {
                 ignoreAttributes: false,
                 attributeNamePrefix: "@_",
             });
-            console.log(xml2);
             assert.deepEqual(xml2, serverxml);
         } catch (e) {
             assert.ifError(e);
-        }
-    });
-
-    test("Search file", async function () {
-        try {
-            console.log("exists", await fsw.exists(path.join(tempPath, "*.xml")));
-            console.log("readable", await fsw.readable(path.join(tempPath, "*.xml")));
-            console.log("readir", await fsw.readdir(tempPath));
-        } catch (e) {
-            console.error(e);
         }
     });
 

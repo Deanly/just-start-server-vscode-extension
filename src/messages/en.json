@@ -1,3 +1,22 @@
 {
+    "E_CF_NFSP": "Not found storage path",
+    "E_CF_NIZD": "Not Initialized",
+    "E_CF_NFCF": "Not found configuration",
+    "E_CF_WPPT": "Write-protected property",
+    "E_CF_ALEX": "Already exists",
+    "E_CF_VDFD": "Validation failed",
+    "E_CF_BKCF": "Broken config file",
 
+    "E_AP_FAIL": "Fatal Failure",
+    "E_AP_NTRY": "Not ready application",
+    "E_AP_NTFN": "Not found",
+    "E_AP_NMSC": "Not found targeting Deployment",
+    "E_AP_NFTD": "Does not match the server configuration the deployment settings",
+    "E_AP_NFWS": "Not found workspace",
+    "E_AP_NVAT": "Validation failed",
+    "E_AP_NAVP": "Already exists application",
+    "E_AP_IACR": "Inaccessible resources",
+    "E_AP_IVIR": "Invalid internal resource",
+
+    "END": "END"
 }

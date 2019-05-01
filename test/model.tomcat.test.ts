@@ -3,9 +3,9 @@ import path from "path";
 
 import Tomcat from "../src/apps/Tomcat";
 
-const demoPomProject1 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "sample-java war-hello"));
-const demoGradleProject1 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "joinfaces-gradle-war-example"));
-const demoGradleProject2 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "gradle-war"));
+const demoPomProject1 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "demo-maven-war-01"));
+const demoGradleProject1 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "demo-gradle-war-01"));
+const demoGradleProject2 = Uri.file(path.join(__dirname, "..", "..", "test", "demo", "demo-gradle-war-02"));
 
 const appTomcat8 = path.join(__dirname, "..", "..", "test", "apps", "apache-tomcat-8.5.28");
 
