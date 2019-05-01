@@ -5,7 +5,7 @@ import { ConfigurationAccessor, accessor, ConfigApplication } from "./configurat
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
 import { OutputChannel, Uri } from "vscode";
-import { getMessage } from "../messages";
+import { getMessage, existsCode } from "../messages";
 
 /**
  * This Enum represents the type of application.
@@ -20,7 +20,7 @@ export function findClassModule(type: AppTypes) {
     switch (type) {
         case AppTypes.TOMCAT: return Tomcat;
         case AppTypes.SPRING_BOOT: return SpringBoot;
-        default: throw ApplicationError.NoValidAppType;
+        default: throw new ApplicationError(ApplicationError.NoValidAppType);
     }
 }
 
@@ -40,7 +40,7 @@ export enum Status {
 export interface IRunnable {
     init(): Promise<void>;
 
-    deploy(): Promise<void>;
+    deploy(outputChannel?: OutputChannel): Promise<void>;
     dispose(): Promise<void>;
     start(outputChannel: OutputChannel): Promise<void>;
     stop(outputChannel: OutputChannel): Promise<void>;
@@ -79,22 +79,25 @@ export class ApplicationError extends Error {
     }
 
     toString() {
-        if (this.code) {
-            return getMessage(this.code);
+        if (this.code && existsCode(this.code)) {
+            return `${getMessage(this.code)}${this.msg ? " (" + this.msg + ")" : ""}`;
+        } else if (existsCode(this.msg)) {
+            return getMessage(this.msg);
         } else {
             return this.msg;
         }
     }
 
-    public static FatalFailure = new ApplicationError("Fatal Failure..", "E_AP_FAIL");
-    public static NotReady = new ApplicationError("Not ready application", "E_AP_NTRY");
-    public static NotFound = new ApplicationError("Not found", "E_AP_NTFN");
-    public static NotFoundTargetDeploy = new ApplicationError("Not found targeting Deployment", "E_AP_NFTD");
-    public static NotFoundWorkspace = new ApplicationError("Not found workspace", "E_AP_NFWS");
-    public static NoValidAppType = new ApplicationError("Validation failed", "E_AP_NVAT");
-    public static NotAvailablePort = new ApplicationError("Already exists application", "E_AP_NAVP");
-    public static InaccessibleResources = new ApplicationError("Inaccessible resources", "E_AP_IACR");
-    public static InvalidInternalResource = new ApplicationError("Invalid internal resource", "E_AP_IVIR");
+    public static FatalFailure = "E_AP_FAIL";
+    public static NotReady = "E_AP_NTRY";
+    public static NotFound = "E_AP_NTFN";
+    public static NotFoundTargetDeploy =  "E_AP_NFTD";
+    public static NotMatchConfDeploy = "E_AP_NMSC";
+    public static NotFoundWorkspace = "E_AP_NFWS";
+    public static NoValidAppType = "E_AP_NVAT";
+    public static NotAvailablePort = "E_AP_NAVP";
+    public static InaccessibleResources = "E_AP_IACR";
+    public static InvalidInternalResource = "E_AP_IVIR";
 }
 
 export namespace container {
@@ -114,7 +117,7 @@ export namespace container {
     }
 
     export async function createApplication(type: AppTypes, id?: string): Promise<IRunnable & ConfigurationAccessor> {
-        if (!uri) { throw ApplicationError.NotFoundWorkspace; }
+        if (!uri) { throw new ApplicationError(ApplicationError.NotFoundWorkspace); }
         id = id || "App" + Date.now();
         const App: any = findClassModule(type);
         return new App(id, uri);
@@ -128,12 +131,12 @@ export namespace container {
             await config.apps.forEach(async (app, i) => {
                 if (!app.appPath) {
                     await accessor.detachConfigApplication(app.id);
-                    (config.apps as any)[i] = null;
+                    (config.apps as any)[i] = undefined;
                 }
             });
         }
         const appConfigs = config.apps
-            .filter(app => app !== null)
+            .filter(app => app !== undefined)
             .filter(app => !_cache.some(loaded => loaded.getId() === app.id));
 
         const apps: Array<IRunnable & ConfigurationAccessor> = [];

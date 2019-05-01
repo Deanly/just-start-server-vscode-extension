@@ -2,7 +2,7 @@ import * as path from "path";
 import * as xml from "fast-xml-parser";
 
 import { fsw } from "./supports";
-import { getMessage } from "../messages";
+import { getMessage, existsCode} from "../messages";
 
 export interface ConfigProperty {
     key: string;
@@ -95,21 +95,23 @@ export class ConfigurationError extends Error {
         super(msg);
     }
 
-    public toString() {
-        if (this.code) {
-            return getMessage(this.code);
+    toString() {
+        if (this.code && existsCode(this.code)) {
+            return `${getMessage(this.code)}${this.msg ? " (" + this.msg + ")" : ""}`;
+        } else if (existsCode(this.msg)) {
+            return getMessage(this.msg);
         } else {
             return this.msg;
         }
     }
 
-    public static NotFoundStoragePath = new ConfigurationError("Not found storage path", "E_CF_NFSP");
-    public static NotInitialized = new ConfigurationError("Not Initialized", "E_CF_NIZD");
-    public static NotFoundConfig = new ConfigurationError("Not found configuration", "E_CF_NFCF");
-    public static WriteProtectedProperty = new ConfigurationError("Write-protected property", "E_CF_WPPT");
-    public static AlreadyExists = new ConfigurationError("Already exists", "E_CF_ALEX");
-    public static ValidationFailed = new ConfigurationError("Validation failed", "E_CF_VDFD");
-    public static BrokenConfigFile = new ConfigurationError("Broken config file", "E_CF_BKCF");
+    public static NotFoundStoragePath = "E_CF_NFSP";
+    public static NotInitialized = "E_CF_NIZD";
+    public static NotFoundConfig = "E_CF_NFCF";
+    public static WriteProtectedProperty = "E_CF_WPPT";
+    public static AlreadyExists = "E_CF_ALEX";
+    public static ValidationFailed = "E_CF_VDFD";
+    public static BrokenConfigFile = "E_CF_BKCF";
 }
 
 
@@ -142,7 +144,7 @@ export namespace accessor {
         const exists = await fsw.exists(_storageRootPath);
         if (!exists) {
             await fsw.mkdir(path.dirname(_storageRootPath));
-        } 
+        }
         return fsw.writefile(path.join(_storageRootPath, file), Buffer.from(JSON.stringify(obj), "utf8"));
     }
 
@@ -179,7 +181,7 @@ export namespace accessor {
     export async function copyAppFsSource (src: string, id: string, progress?: (mark: number, come: number) => void): Promise<string> {
         const appPath = path.join(_storageRootPath, id);
         const exists = await fsw.exists(appPath);
-        if (!exists) { 
+        if (!exists) {
             await fsw.mkdir(appPath);
         }
 

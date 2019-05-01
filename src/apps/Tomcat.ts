@@ -91,42 +91,56 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         return Promise.reject(new Error("Not found server version number"));
     }
 
-    async packageByMaven(): Promise<string> {
+    async packageByMaven(outputChannel?: OutputChannel): Promise<string> {
+        let pomXml: string;
+        try { pomXml = (await fsw.readfile(path.join(this.rootPath, "pom.xml"))).toString(); } catch (ignore) { return ""; }
         try {
             const output: Array<string> = [];
-            await util.executeChildProcess(this.command.maven, { shell: true }, ["package", `--file="${this.workspaceUri.path}"`], output);
 
-            const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
-            if (!findWarLine) { throw new Error("Packaging Failed"); }
 
-            const words = findWarLine.split(":");
-            return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
-        } catch (e) {
-            console.error(e);
-            return "";
-        }
-    }
+            if (pomXml.replace(/(\s)|(\>)/gi, "").toLowerCase().match(/packagingwar/)) {
+                await util.executeChildProcess(
+                    this.command.maven,
+                    { shell: true },
+                    ["package", `--file="${this.workspaceUri.path}"`],
+                    output, outputChannel);
+                const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
+                if (!findWarLine) { throw new Error("Packaging Failed"); }
 
-    async packageByGradle(): Promise<string> {
-        try {
-            const output: Array<string> = [];
-            const buildGradle = (await fsw.readfile(path.join(this.rootPath, "build.gradle"))).toString();
-
-            if (buildGradle.replace(/(\')|(\")|(\s)/gi, "").match(/applyplugin:war/)) {
-                await util.executeChildProcess(this.command.gradle, { shell: true }, ["build", `-b="${path.join(this.rootPath, "build.gradle")}"`], output);
-                return await fsw.findFilePath(path.join(this.rootPath), "*.war");
+                const words = findWarLine.split(":");
+                return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
             } else {
-                return "";
+                throw new ApplicationError("No war-package setting in 'pom.xml'", ApplicationError.NotMatchConfDeploy);
             }
         } catch (e) {
-            console.error(e);
+            if (e instanceof ApplicationError) { throw e; }
             return "";
         }
     }
 
-    async deploy(): Promise<void> {
-        let war = await this.packageByMaven();
-        if (!war) { war = await this.packageByGradle(); }
+    async packageByGradle(outputChannel?: OutputChannel): Promise<string> {
+        let buildGradle: string;
+        try { buildGradle = (await fsw.readfile(path.join(this.rootPath, "build.gradle"))).toString(); } catch (ignore) { return ""; }
+        try {
+            if (buildGradle.replace(/(\')|(\")|(\s)/gi, "").toLowerCase().match(/applyplugin:war/)) {
+                await util.executeChildProcess(
+                    this.command.gradle,
+                    { shell: true },
+                    ["build", `-b="${path.join(this.rootPath, "build.gradle")}"`],
+                    [], outputChannel);
+                return await fsw.findFilePath(path.join(this.rootPath), "*.war");
+            } else {
+                throw new ApplicationError("No war-plugin setting in 'build.gradle'", ApplicationError.NotMatchConfDeploy);
+            }
+        } catch (e) {
+            if (e instanceof ApplicationError) { throw e; }
+            return "";
+        }
+    }
+
+    async deploy(outputChannel?: OutputChannel): Promise<void> {
+        let war = await this.packageByMaven(outputChannel);
+        if (!war) { war = await this.packageByGradle(outputChannel); }
         if (!war) { war = path.join(this.rootPath, this.getProperty("war_path")!.value); }
 
         if (!(await fsw.readable(war))) {
@@ -136,7 +150,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                     await this.saveConfigProperties([{ key: "war_path", value: path.join("target", filename) }]);
                     war = path.join(this.rootPath, this.getProperty("war_path")!.value);
                 } else {
-                    throw ApplicationError.NotFoundTargetDeploy;
+                    throw new ApplicationError(ApplicationError.NotFoundTargetDeploy);
 
                     // util.executeChildProcess()
                 }
@@ -228,7 +242,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     async stop(outputChannel?: OutputChannel): Promise<void> {
-        if (!this._process) { throw ApplicationError.FatalFailure; }
+        if (!this._process) { throw new ApplicationError(ApplicationError.FatalFailure); }
         let trying = 0, succeed = false, err;
         while (!succeed) {
             try {
@@ -308,61 +322,61 @@ class ServerXmlAdapter {
     }
 
     async save(): Promise<void> {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         return await accessor.writeXmlFile<ServerXmlData>(this.confPath, this._data, xmlOptions);
     }
 
     get port(): string {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
-        if (!connector) { throw ApplicationError.InvalidInternalResource; }
+        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         return connector._$_port;
     }
 
     set port(v: string) {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
-        if (!connector) { throw ApplicationError.InvalidInternalResource; }
+        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         connector._$_port = v;
     }
 
     get ajp_port(): string {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
-        if (!connector) { throw ApplicationError.InvalidInternalResource; }
+        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         return connector._$_port;
     }
 
     set ajp_port(v: string) {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
-        if (!connector) { throw ApplicationError.InvalidInternalResource; }
+        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         connector._$_port = v;
     }
 
     get redirect_port(): string {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector[0];
-        if (!connector) { throw ApplicationError.InvalidInternalResource; }
+        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         return connector._$_redirectPort;
     }
 
     set redirect_port(v: string) {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         const connectors = this._data.Server.Service.Connector.filter(c => c._$_protocol.startsWith("AJP"));
-        if (connectors.length === 0) { throw ApplicationError.InvalidInternalResource; }
+        if (connectors.length === 0) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
         for (let conn of connectors) {
             conn._$_redirectPort = v;
         }
     }
 
     get shutdown_port(): string {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         return this._data.Server._$_port;
     }
 
     set shutdown_port(v: string) {
-        if (!this._data) { throw ApplicationError.NotReady; }
+        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
         this._data.Server._$_port = v;
     }
 }

@@ -74,12 +74,12 @@ export class ServerEntry extends vscode.TreeItem {
     async runEntry (isDebug: boolean): Promise<void> {
         const prevStatus = this.server.status;
         try {
-            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw ApplicationError.NotAvailablePort; }
+            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new ApplicationError(ApplicationError.NotAvailablePort); }
             if (this.busy) { return; }
             this.busy = true;
             this.server.status = Status.PREPARING;
             this.redraw();
-            await this.server.deploy();
+            await this.server.deploy(this.outputChannel);
             await util.setTimeoutPromise(() => {}, 2000);
             this.outputChannel.clear();
             if (isDebug) {

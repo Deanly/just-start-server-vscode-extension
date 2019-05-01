@@ -77,7 +77,7 @@ export namespace fsw {
 
     export function writefile(path: string, content: Buffer): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            console.log(new Date(), "writeFile", content.toString());
+            // console.log(new Date(), "writeFile", content.toString());
             fs.writeFile(path, content, err => handleResult(resolve, reject, err, void 0));
         });
     }
@@ -288,7 +288,7 @@ export namespace util {
     export async function executeChildProcess(command: string, options: SpawnOptions, args: string[], out: Array<string>, outputPane?: vscode.OutputChannel): Promise<ChildProcess> {
         return await new Promise<ChildProcess>((resolve, reject) => {
             let stderr: string = "";
-            console.log("-supports command-> ", command, args.join(" "), options, command.replace(" ", "\\ "));
+            // console.log("-supports command-> ", command, args.join(" "), options, command.replace(" ", "\\ "));
             const process = spawn(command.replace(" ", "\\ "), args, options);
             if (outputPane) {
                 outputPane.show();
@@ -315,7 +315,7 @@ export namespace util {
             });
             process.on("exit", (code: number) => {
                 if (code !== 0) {
-                    console.log(out.join(""));
+                    // console.log(out.join(""));
                     reject(new Error(`Failed execute child process ${code}`));
                 } else {
                     resolve(process);
