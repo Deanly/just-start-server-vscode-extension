@@ -285,7 +285,7 @@ export namespace util {
         }
     }
 
-    export async function executeChildProcess(command: string, options: SpawnOptions, args: string[], out: Array<string>, outputPane?: vscode.OutputChannel): Promise<ChildProcess> {
+    export async function executeChildProcess(command: string, options: SpawnOptions, args: string[], out: Array<string>, outputPane?: vscode.OutputChannel, escape?: boolean): Promise<ChildProcess> {
         return await new Promise<ChildProcess>((resolve, reject) => {
             let stderr: string = "";
             // console.log("-supports command-> ", command, args.join(" "), options, command.replace(" ", "\\ "));
@@ -321,7 +321,7 @@ export namespace util {
                     resolve(process);
                 }
             });
-            if (outputPane) {
+            if (escape) {
                 setTimeout(() => resolve(process), 200);
             }
         });

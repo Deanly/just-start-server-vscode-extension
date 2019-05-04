@@ -105,6 +105,11 @@ export class ConfigurationError extends Error {
         }
     }
 
+    public static match(error: ConfigurationError|Error, code: string): boolean {
+        if (error instanceof Error) { return false; }
+        return ((error as ConfigurationError).msg === code) || ((error as ConfigurationError).code === code);
+    }
+
     public static NotFoundStoragePath = "E_CF_NFSP";
     public static NotInitialized = "E_CF_NIZD";
     public static NotFoundConfig = "E_CF_NFCF";

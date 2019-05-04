@@ -70,6 +70,14 @@
                 }
             },
             {
+                "command": "serverExplorer.rerunEntry",
+                "title": "Rerun",
+                "icon": {
+                    "light": "resources/light/replay.svg",
+                    "dark": "resources/dark/replay.svg"
+                }
+            },
+            {
                 "command": "serverExplorer.stopEntry",
                 "title": "Stop",
                 "icon": {
@@ -98,6 +106,12 @@
                 "title": "Delete"
             }
         ],
+        "keybindings": [{
+            "command": "serverExplorer.rerunEntry",
+            "key": "f5",
+            "mac": "f5",
+            "when": "editorTextFocus"
+        }],
         "menus": {
             "view/title": [
                 {
@@ -133,6 +147,11 @@
                 },
                 {
                     "command": "serverExplorer.stopEntry",
+                    "when": "view == serverExplorer && viewItem == running",
+                    "group": "inline"
+                },
+                {
+                    "command": "serverExplorer.rerunEntry",
                     "when": "view == serverExplorer && viewItem == running",
                     "group": "inline"
                 },
