@@ -84,9 +84,9 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         const output: Array<string> = [];
         await util.executeChildProcess(this.command.version, { shell: true }, [], output);
 
-        const str = output.find(s => s.search("Server number:") > -1);
+        const str = output.join("").split("\n").find(s => !!s.replace(/\s/gi, "").toLowerCase().match(/servernumber/));
         if (str) {
-            return str.split("Server number:")[1].split("\n")[0].replace(/\s/g, "");
+            return str.split(":")[1].split("\n")[0].replace(/\s*/, "");
         }
         return Promise.reject(new Error("Not found server version number"));
     }
@@ -217,7 +217,9 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             port: ports[3]
         };
 
-        setTimeout(() => debug.startDebugging(workspace.getWorkspaceFolder(this.workspaceUri), config), 400);
+        if (!await debug.startDebugging(workspace.getWorkspaceFolder(this.workspaceUri), config)) {
+            throw new ApplicationError(ApplicationError.FatalFailure);
+        }
     }
 
     private async execProcess(outputChannel: OutputChannel, debugPort?: number): Promise<void> {
@@ -238,7 +240,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
         args.push("org.apache.catalina.startup.Bootstrap \"$@\"");
 
-        this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel);
+        this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel, true);
     }
 
     async stop(outputChannel?: OutputChannel): Promise<void> {

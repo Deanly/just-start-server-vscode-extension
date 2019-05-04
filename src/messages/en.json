@@ -18,5 +18,7 @@
     "E_AP_IACR": "Inaccessible resources",
     "E_AP_IVIR": "Invalid internal resource",
 
+    "M_AP_DPLY": "Deployment complete",
+
     "END": "END"
 }

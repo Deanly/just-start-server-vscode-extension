@@ -29,23 +29,25 @@ export function activate (context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.editEntry", handle(async (entry: PropertyEntry) => await entry.changeValue())));
     context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.refreshEntry", handle(async () => await propertyTreeDataProvider.refresh())));
 
+    let currentEntry: ServerEntry;
     context.subscriptions.push(vscode.window.registerTreeDataProvider("serverExplorer", serverTreeDataProvider));
     context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.addServer", handle(async () => await serverTreeDataProvider.commandAddTreeItem())));
     context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.delServer", handle(async (entry: ServerEntry) => await serverTreeDataProvider.commandDeleteServer(entry))));
     context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.refresh", handle(async () => await serverTreeDataProvider.refresh())));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.runEntry", handle(async (entry: ServerEntry) => { await entry.runEntry(false).then(() => onServerChange.fire(entry)); })));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.debugEntry", handle(async (entry: ServerEntry) => { await entry.runEntry(true).then(() => onServerChange.fire(entry)); })));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.stopEntry", handle(async (entry: ServerEntry) => await entry.stopEntry())));
-    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.selectEntry", handle((entry) => serverTreeDataProvider.selectTreeItem(entry))));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.runEntry", handle(async (entry: ServerEntry) => { if (entry) { await entry.runEntry(false).then(() => onServerChange.fire(entry)); } else if (currentEntry) { await currentEntry.runEntry(false).then(() => onServerChange.fire(entry)); } })));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.debugEntry", handle(async (entry: ServerEntry) => { if (entry) { await entry.runEntry(true).then(() => onServerChange.fire(entry)); } else if (currentEntry) { await currentEntry.runEntry(true).then(() => onServerChange.fire(entry)); } })));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.stopEntry", handle(async (entry: ServerEntry) => { if (entry) { await entry.stopEntry(); } else if (currentEntry) { await currentEntry.stopEntry(); } })));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.rerunEntry", handle(async (entry: ServerEntry) => { if (entry) { await entry.rerunEntry(); } else if (currentEntry) { currentEntry.rerunEntry(); }})));
+    context.subscriptions.push(vscode.commands.registerCommand("serverExplorer.selectEntry", handle((entry) => { currentEntry = entry; serverTreeDataProvider.selectTreeItem(entry); })));
 
     setTimeout(() => serverTreeDataProvider.refresh(), 500);
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    app.container.getApplications().forEach(element => {
-        element.dispose();
-    });
+    // app.container.getApplications().forEach(element => {
+    //     element.dispose();
+    // });
 }
 
 function initialize (context: vscode.ExtensionContext, n: number = 10): void {
@@ -65,7 +67,7 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
 function hError(e: Error) {
     console.error(e);
 
-    if (e === config.ConfigurationError.BrokenConfigFile) {
+    if (config.ConfigurationError.match(e, config.ConfigurationError.BrokenConfigFile)) {
         vscode.window.showErrorMessage(e.toString());
         config.accessor.reset()
             .then(() => {

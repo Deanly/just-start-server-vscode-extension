@@ -6,6 +6,7 @@ import { container, IRunnable, AppTypes, Status, ApplicationError } from "../cor
 import { accessor, ConfigurationAccessor } from "../core/configuration";
 
 import { multiStepInput } from "./serverPicker";
+import { getMessage } from "../messages";
 
 export class ServerEntry extends vscode.TreeItem {
 
@@ -20,11 +21,17 @@ export class ServerEntry extends vscode.TreeItem {
     ) {
         super(server.getName());
         this.outputChannel = vscode.window.createOutputChannel(`${server.getName()}`);
+
+        this.disposableOnDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session) => {
+            console.log(this.server.status, session);
+            if (this.server.status === Status.RUNNING) { this.stopEntry(); }
+        });
     }
 
     dispose () {
         this.outputChannel.dispose();
         this.server.dispose();
+        this.disposableOnDidTerminateDebugSession.dispose();
     }
 
     private _defaultIconPath = {
@@ -41,6 +48,8 @@ export class ServerEntry extends vscode.TreeItem {
             light: this.context.asAbsolutePath(path.join("resources", "dark", "dependency.svg")),
         }
     };
+    private isDebug = false;
+    private disposableOnDidTerminateDebugSession: vscode.Disposable;
 
     get iconPath () {
         if (this.server.getIconPath) {
@@ -79,9 +88,12 @@ export class ServerEntry extends vscode.TreeItem {
             this.busy = true;
             this.server.status = Status.PREPARING;
             this.redraw();
-            await this.server.deploy(this.outputChannel);
-            await util.setTimeoutPromise(() => {}, 2000);
             this.outputChannel.clear();
+            await this.server.deploy(this.outputChannel);
+            this.outputChannel.appendLine("");
+            this.outputChannel.appendLine(getMessage("M_AP_DPLY"));
+            this.outputChannel.appendLine("");
+            await util.setTimeoutPromise(() => {}, 2000);
             if (isDebug) {
                 await this.server.debug(this.outputChannel);
             } else {
@@ -89,6 +101,7 @@ export class ServerEntry extends vscode.TreeItem {
             }
             await util.setTimeoutPromise(() => {}, 3000);
             this.server.status = Status.RUNNING;
+            this.isDebug = isDebug;
         } catch (e) {
             this.busy = false;
             this.server.status = prevStatus;
@@ -116,6 +129,12 @@ export class ServerEntry extends vscode.TreeItem {
 
         this.redraw();
         this.busy = false;
+    }
+
+    async rerunEntry (): Promise<void> {
+        await this.stopEntry();
+        await this.runEntry(this.isDebug);
+        return void 0;
     }
 
     command = {
