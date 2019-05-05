@@ -42,6 +42,9 @@ export default class SpringBoot extends ConfigurationAccessor implements IRunnab
         throw new Error("Method not implemented.");
     }
 
+    getDebugSessionName(): string {
+        return `debug_${this.getName()}`;
+    }
     getStatus (): Status {
         return this.status;
     }
