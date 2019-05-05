@@ -156,7 +156,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 }
             }
         }
-        console.debug("package war path", war);
 
         const webapps = path.join(this.getAppPath(), "webapps");
         await fsw.rmrf(webapps);
@@ -167,7 +166,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     async dispose(): Promise<void> {
-        await this.stop();
     }
 
     private async _prepareTomcat(ports: Array<number>): Promise<void> {
@@ -197,6 +195,10 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         await this.execProcess(outputChannel);
     }
 
+    getDebugSessionName(): string {
+        return `debug_${this.getName()}`;
+    }
+
     async debug(outputChannel: OutputChannel): Promise<void> {
         let ports;
         try {
@@ -211,7 +213,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
         const config: DebugConfiguration = {
             type: "java",
-            name: `debug_${this.getName()}`,
+            name: this.getDebugSessionName(),
             request: "attach",
             hostName: "localhost",
             port: ports[3]

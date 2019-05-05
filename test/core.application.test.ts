@@ -40,6 +40,10 @@ class Test extends ConfigurationAccessor implements here.IRunnable {
         return parseInt(this.getProperty("port")!.value);
     }
 
+    getDebugSessionName(): string {
+        return "testdebugsession";
+    }
+
     constructor (
         public readonly type: here.AppTypes
     ) {

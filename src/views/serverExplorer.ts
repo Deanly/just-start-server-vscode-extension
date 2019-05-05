@@ -22,16 +22,17 @@ export class ServerEntry extends vscode.TreeItem {
         super(server.getName());
         this.outputChannel = vscode.window.createOutputChannel(`${server.getName()}`);
 
-        this.disposableOnDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession((session) => {
-            console.log(this.server.status, session);
-            if (this.server.status === Status.RUNNING) { this.stopEntry(); }
+        this.disposableOnDidTerminateDebugSession = vscode.debug.onDidTerminateDebugSession(session => {
+            if (this.server.status === Status.RUNNING && session.name === this.server.getDebugSessionName()) {
+                this.stopEntry();
+            }
         });
     }
 
     dispose () {
         this.outputChannel.dispose();
-        this.server.dispose();
         this.disposableOnDidTerminateDebugSession.dispose();
+        this.server.dispose();
     }
 
     private _defaultIconPath = {
@@ -147,6 +148,8 @@ export class ServerEntry extends vscode.TreeItem {
 
 export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEntry> {
 
+    private _children: Array<ServerEntry> = [];
+
     private _onDidChangeTreeData: vscode.EventEmitter<ServerEntry| null | undefined> = new vscode.EventEmitter();
     readonly onDidChangeTreeData: vscode.Event<ServerEntry| null | undefined> = this._onDidChangeTreeData.event;
 
@@ -165,6 +168,9 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
 
     async refresh (exactly?: boolean): Promise<void> {
         await container.loadFromConfigurations(exactly);
+        this._children.forEach(child => child.dispose());
+        const apps = container.getApplications();
+        this._children = await Promise.resolve(apps.map(s => new ServerEntry(this.context, s, this._onDidChangeTreeData)));
         this._onDidChangeTreeData.fire();
         return void 0;
     }
@@ -174,8 +180,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
     }
 
     getChildren (element?: ServerEntry): vscode.ProviderResult<ServerEntry[]> {
-        const apps = container.getApplications();
-        return Promise.resolve(apps.map(s => new ServerEntry(this.context, s, this._onDidChangeTreeData)));
+        return this._children;
     }
 
     async commandAddTreeItem (): Promise<void> {

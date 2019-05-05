@@ -55,6 +55,7 @@ export interface IRunnable {
     getStatus(): Status;
     getServicePort(): number;
     getIconPath?(asAbsolutePath: (relativePath: string) => string): { dark: string, light: string } | string;
+    getDebugSessionName(): string;
 
     type: AppTypes;
     status: Status;
