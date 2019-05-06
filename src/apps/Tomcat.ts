@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { fsw, util, network } from "../core/supports";
+import { fsw, util, network, h } from "../core/supports";
 import { IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
 import { ConfigurationAccessor, accessor } from "../core/configuration";
 import { OutputChannel, DebugConfiguration, debug, workspace, Uri } from "vscode";
@@ -31,7 +31,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 { key: "AJP_PORT", value: "any", changeable: false },
                 { key: "REDIRECT_PORT", value: "any", changeable: false },
                 { key: "SHUTDOWN_PORT", value: "any", changeable: false },
-            ]
+            ],
         });
         this.rootPath = workspaceUri.path;
         this.command = { start: "", stop: "", version: "", maven: "", gradle: "" };
@@ -110,10 +110,10 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 const words = findWarLine.split(":");
                 return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
             } else {
-                throw new ApplicationError("No war-package setting in 'pom.xml'", ApplicationError.NotMatchConfDeploy);
+                throw new h.ExtError("No war-package setting in 'pom.xml'", ApplicationError.NotMatchConfDeploy);
             }
         } catch (e) {
-            if (e instanceof ApplicationError) { throw e; }
+            if (e instanceof h.ExtError) { throw e; }
             return "";
         }
     }
@@ -130,10 +130,10 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                     [], outputChannel);
                 return await fsw.findFilePath(path.join(this.rootPath), "*.war");
             } else {
-                throw new ApplicationError("No war-plugin setting in 'build.gradle'", ApplicationError.NotMatchConfDeploy);
+                throw new h.ExtError("No war-plugin setting in 'build.gradle'", ApplicationError.NotMatchConfDeploy);
             }
         } catch (e) {
-            if (e instanceof ApplicationError) { throw e; }
+            if (e instanceof h.ExtError) { throw e; }
             return "";
         }
     }
@@ -150,7 +150,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                     await this.saveConfigProperties([{ key: "war_path", value: path.join("target", filename) }]);
                     war = path.join(this.rootPath, this.getProperty("war_path")!.value);
                 } else {
-                    throw new ApplicationError(ApplicationError.NotFoundTargetDeploy);
+                    throw new h.ExtError(ApplicationError.NotFoundTargetDeploy);
 
                     // util.executeChildProcess()
                 }
@@ -196,7 +196,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     getDebugSessionName(): string {
-        return `debug_${this.getName()}`;
+        return `debug_${this.getId()}`;
     }
 
     async debug(outputChannel: OutputChannel): Promise<void> {
@@ -220,7 +220,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         };
 
         if (!await debug.startDebugging(workspace.getWorkspaceFolder(this.workspaceUri), config)) {
-            throw new ApplicationError(ApplicationError.FatalFailure);
+            throw new h.ExtError(ApplicationError.FatalFailure);
         }
     }
 
@@ -246,7 +246,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     async stop(outputChannel?: OutputChannel): Promise<void> {
-        if (!this._process) { throw new ApplicationError(ApplicationError.FatalFailure); }
+        if (!this._process) { throw new h.ExtError(ApplicationError.FatalFailure); }
         let trying = 0, succeed = false, err;
         while (!succeed) {
             try {
@@ -326,61 +326,61 @@ class ServerXmlAdapter {
     }
 
     async save(): Promise<void> {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         return await accessor.writeXmlFile<ServerXmlData>(this.confPath, this._data, xmlOptions);
     }
 
     get port(): string {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
-        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (!connector) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         return connector._$_port;
     }
 
     set port(v: string) {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("HTTP"));
-        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (!connector) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         connector._$_port = v;
     }
 
     get ajp_port(): string {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
-        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (!connector) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         return connector._$_port;
     }
 
     set ajp_port(v: string) {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector.find(c => c._$_protocol.startsWith("AJP"));
-        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (!connector) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         connector._$_port = v;
     }
 
     get redirect_port(): string {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connector = this._data.Server.Service.Connector[0];
-        if (!connector) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (!connector) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         return connector._$_redirectPort;
     }
 
     set redirect_port(v: string) {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         const connectors = this._data.Server.Service.Connector.filter(c => c._$_protocol.startsWith("AJP"));
-        if (connectors.length === 0) { throw new ApplicationError(ApplicationError.InvalidInternalResource); }
+        if (connectors.length === 0) { throw new h.ExtError(ApplicationError.InvalidInternalResource); }
         for (let conn of connectors) {
             conn._$_redirectPort = v;
         }
     }
 
     get shutdown_port(): string {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         return this._data.Server._$_port;
     }
 
     set shutdown_port(v: string) {
-        if (!this._data) { throw new ApplicationError(ApplicationError.NotReady); }
+        if (!this._data) { throw new h.ExtError(ApplicationError.NotReady); }
         this._data.Server._$_port = v;
     }
 }

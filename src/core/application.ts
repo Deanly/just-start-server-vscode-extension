@@ -1,11 +1,11 @@
 "use strict";
 
-import { ConfigurationAccessor, accessor, ConfigApplication } from "./configuration";
+import { ConfigurationAccessor, accessor, ConfigApplication, Workspace } from "./configuration";
 
+import { h } from "../core/supports";
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
 import { OutputChannel, Uri } from "vscode";
-import { getMessage, existsCode } from "../messages";
 
 /**
  * This Enum represents the type of application.
@@ -20,7 +20,7 @@ export function findClassModule(type: AppTypes) {
     switch (type) {
         case AppTypes.TOMCAT: return Tomcat;
         case AppTypes.SPRING_BOOT: return SpringBoot;
-        default: throw new ApplicationError(ApplicationError.NoValidAppType);
+        default: throw new h.ExtError(ApplicationError.NoValidAppType);
     }
 }
 
@@ -63,7 +63,7 @@ export interface IRunnable {
 
 export async function validateExecutableApplication(type: AppTypes, path: string, version?: string) {
     const App: any = findClassModule(type);
-    const app = new App("xx", container.getWorkspaceUri()) as (IRunnable & ConfigurationAccessor);
+    const app = new App("xx", Uri.file("./")) as (IRunnable & ConfigurationAccessor);
     app.config.appPath = path;
     if (app.validateSource) {
         return await app.validateSource(version);
@@ -71,66 +71,43 @@ export async function validateExecutableApplication(type: AppTypes, path: string
     return true;
 }
 
-export class ApplicationError extends Error {
-    constructor(
-        public readonly msg: string,
-        public readonly code?: string
-    ) {
-        super(msg);
-    }
-
-    toString() {
-        if (this.code && existsCode(this.code)) {
-            return `${getMessage(this.code)}${this.msg ? " (" + this.msg + ")" : ""}`;
-        } else if (existsCode(this.msg)) {
-            return getMessage(this.msg);
-        } else {
-            return this.msg;
-        }
-    }
-
-    public static FatalFailure = "E_AP_FAIL";
-    public static NotReady = "E_AP_NTRY";
-    public static NotFound = "E_AP_NTFN";
-    public static NotFoundTargetDeploy =  "E_AP_NFTD";
-    public static NotMatchConfDeploy = "E_AP_NMSC";
-    public static NotFoundWorkspace = "E_AP_NFWS";
-    public static NoValidAppType = "E_AP_NVAT";
-    public static NotAvailablePort = "E_AP_NAVP";
-    public static InaccessibleResources = "E_AP_IACR";
-    public static InvalidInternalResource = "E_AP_IVIR";
+export const ApplicationError = {
+    FatalFailure: "E_AP_FAIL",
+    NotReady: "E_AP_NTRY",
+    NotFound: "E_AP_NTFN",
+    NotFoundTargetDeploy:  "E_AP_NFTD",
+    NotMatchConfDeploy: "E_AP_NMSC",
+    NotFoundWorkspace: "E_AP_NFWS",
+    NoValidAppType: "E_AP_NVAT",
+    NotAvailablePort: "E_AP_NAVP",
+    InaccessibleResources: "E_AP_IACR",
+    InvalidInternalResource: "E_AP_IVIR"
 }
 
 export namespace container {
-    let uri: Uri;
     const _cache: (IRunnable & ConfigurationAccessor)[] = [];
 
-    export function initialize(_uri: Uri): void {
-        uri = _uri;
-    }
-
-    export function getWorkspaceUri() {
-        return uri;
+    export function initialize(): void {
     }
 
     export function reset() {
         _cache.length = 0;
     }
 
-    export async function createApplication(type: AppTypes, id?: string): Promise<IRunnable & ConfigurationAccessor> {
-        if (!uri) { throw new ApplicationError(ApplicationError.NotFoundWorkspace); }
+    export async function createApplication(type: AppTypes, workspace?: Workspace, id?: string): Promise<IRunnable & ConfigurationAccessor> {
+        if (!workspace) { throw new h.ExtError(ApplicationError.NotFoundWorkspace); }
         id = id || "App" + Date.now();
         const App: any = findClassModule(type);
-        return new App(id, uri);
+        return new App(id, Uri.file(workspace.path));
     }
 
     export async function loadFromConfigurations(exactly?: boolean): Promise<void> {
         const config = await accessor.readConfigFile();
         if (exactly) { _cache.length = 0; }
 
-        if (config.apps.some(app => !app.appPath)) {
+        if (config.apps.some(app => !app.appPath || !app.workspace)) {
             await config.apps.forEach(async (app, i) => {
-                if (!app.appPath) {
+                if (!app.appPath || !app.workspace) {
                     await accessor.detachConfigApplication(app.id);
                     (config.apps as any)[i] = undefined;
                 }
@@ -152,7 +129,7 @@ export namespace container {
     }
 
     async function _initializeApplication(config: ConfigApplication): Promise<IRunnable & ConfigurationAccessor> {
-        const app = await createApplication(AppTypes[config.type as AppTypes], config.id);
+        const app = await createApplication(AppTypes[config.type as AppTypes], config.workspace, config.id);
         const pure = [...app.getProperties()];
         app.setConfig(config);
 

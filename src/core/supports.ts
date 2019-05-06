@@ -288,7 +288,6 @@ export namespace util {
     export async function executeChildProcess(command: string, options: SpawnOptions, args: string[], out: Array<string>, outputPane?: vscode.OutputChannel, escape?: boolean): Promise<ChildProcess> {
         return await new Promise<ChildProcess>((resolve, reject) => {
             let stderr: string = "";
-            // console.log("-supports command-> ", command, args.join(" "), options, command.replace(" ", "\\ "));
             const process = spawn(command.replace(" ", "\\ "), args, options);
             if (outputPane) {
                 outputPane.show();
@@ -298,7 +297,6 @@ export namespace util {
                 });
             } else {
                 process.stdout.on("data", (data: string | Buffer): void => {
-                    // console.log("data", data);
                     out.push(data.toString());
                 });
             }
@@ -315,7 +313,6 @@ export namespace util {
             });
             process.on("exit", (code: number) => {
                 if (code !== 0) {
-                    // console.log(out.join(""));
                     reject(new Error(`Failed execute child process ${code}`));
                 } else {
                     resolve(process);
@@ -326,4 +323,33 @@ export namespace util {
             }
         });
     }
+}
+
+
+import { getMessage, existsCode } from "../messages";
+export namespace h {
+    export class ExtError extends Error {
+        constructor(
+            public readonly msg: string,
+            public readonly code?: string
+        ) {
+            super(msg);
+            if (existsCode(msg) && !code) {
+                this.code = msg;
+            }
+        }
+
+        toString() {
+            if (this.code && existsCode(this.code)) {
+                return `${getMessage(this.code)}${this.msg ? " (" + this.msg + ")" : ""}`;
+            } else {
+                return this.msg;
+            }
+        }
+    }
+
+    export function matchError(error: ExtError|Error, code: string): boolean {
+            if (error instanceof Error) { return false; }
+            return ((error as ExtError).msg === code) || ((error as ExtError).code === code);
+        }
 }

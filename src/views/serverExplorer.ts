@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import { util, network } from "../core/supports";
+import { util, network, h } from "../core/supports";
 import { container, IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
-import { accessor, ConfigurationAccessor } from "../core/configuration";
+import { accessor, ConfigurationAccessor, Workspace } from "../core/configuration";
 
 import { multiStepInput } from "./serverPicker";
 import { getMessage } from "../messages";
@@ -13,10 +13,10 @@ export class ServerEntry extends vscode.TreeItem {
     public busy = false;
     public outputChannel: vscode.OutputChannel;
 
-    constructor (
+    constructor(
         protected readonly context: vscode.ExtensionContext,
-        protected readonly server: ConfigurationAccessor&IRunnable,
-        public readonly onDidChangeTreeData: vscode.EventEmitter<ServerEntry| null | undefined>,
+        protected readonly server: ConfigurationAccessor & IRunnable,
+        public readonly onDidChangeTreeData: vscode.EventEmitter<ServerEntry | null | undefined>,
         public readonly collapsibleState?: vscode.TreeItemCollapsibleState,
     ) {
         super(server.getName());
@@ -29,7 +29,7 @@ export class ServerEntry extends vscode.TreeItem {
         });
     }
 
-    dispose () {
+    dispose() {
         this.outputChannel.dispose();
         this.disposableOnDidTerminateDebugSession.dispose();
         this.server.dispose();
@@ -52,7 +52,7 @@ export class ServerEntry extends vscode.TreeItem {
     private isDebug = false;
     private disposableOnDidTerminateDebugSession: vscode.Disposable;
 
-    get iconPath () {
+    get iconPath() {
         if (this.server.getIconPath) {
             return this.server.getIconPath(this.context.asAbsolutePath);
         } else {
@@ -65,26 +65,26 @@ export class ServerEntry extends vscode.TreeItem {
         }
     }
 
-    get contextValue (): string {
+    get contextValue(): string {
         return this.server.getStatus();
     }
 
-    get properties () {
+    get properties() {
         return this.server.getProperties();
     }
 
-    getServer () {
+    getServer() {
         return this.server;
     }
 
-    redraw (): void {
+    redraw(): void {
         this.onDidChangeTreeData.fire(this);
     }
 
-    async runEntry (isDebug: boolean): Promise<void> {
+    async runEntry(isDebug: boolean): Promise<void> {
         const prevStatus = this.server.status;
         try {
-            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new ApplicationError(ApplicationError.NotAvailablePort); }
+            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new h.ExtError(ApplicationError.NotAvailablePort); }
             if (this.busy) { return; }
             this.busy = true;
             this.server.status = Status.PREPARING;
@@ -94,13 +94,13 @@ export class ServerEntry extends vscode.TreeItem {
             this.outputChannel.appendLine("");
             this.outputChannel.appendLine(getMessage("M_AP_DPLY"));
             this.outputChannel.appendLine("");
-            await util.setTimeoutPromise(() => {}, 1000);
+            await util.setTimeoutPromise(() => { }, 1000);
             if (isDebug) {
                 await this.server.debug(this.outputChannel);
             } else {
                 await this.server.start(this.outputChannel);
             }
-            await util.setTimeoutPromise(() => {}, 1000);
+            await util.setTimeoutPromise(() => { }, 1000);
             this.server.status = Status.RUNNING;
             this.isDebug = isDebug;
         } catch (e) {
@@ -113,7 +113,7 @@ export class ServerEntry extends vscode.TreeItem {
         this.busy = false;
     }
 
-    async stopEntry (): Promise<void> {
+    async stopEntry(): Promise<void> {
         if (this.busy) { return; }
         this.busy = true;
         const prevStatus = this.server.status;
@@ -121,7 +121,7 @@ export class ServerEntry extends vscode.TreeItem {
             this.server.status = Status.PREPARING;
             this.redraw();
             await this.server.stop(this.outputChannel);
-            await util.setTimeoutPromise(() => {}, 1000);
+            await util.setTimeoutPromise(() => { }, 1000);
             this.server.status = Status.STOP;
         } catch (e) {
             this.busy = false;
@@ -133,7 +133,7 @@ export class ServerEntry extends vscode.TreeItem {
         this.busy = false;
     }
 
-    async rerunEntry (): Promise<void> {
+    async rerunEntry(): Promise<void> {
         await this.stopEntry();
         await this.runEntry(this.isDebug);
         return void 0;
@@ -151,23 +151,23 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
 
     private _children: Array<ServerEntry> = [];
 
-    private _onDidChangeTreeData: vscode.EventEmitter<ServerEntry| null | undefined> = new vscode.EventEmitter();
-    readonly onDidChangeTreeData: vscode.Event<ServerEntry| null | undefined> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: vscode.EventEmitter<ServerEntry | null | undefined> = new vscode.EventEmitter();
+    readonly onDidChangeTreeData: vscode.Event<ServerEntry | null | undefined> = this._onDidChangeTreeData.event;
 
-    constructor (
+    constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly onServerChange: vscode.EventEmitter<ServerEntry|null|undefined>,
+        private readonly onServerChange: vscode.EventEmitter<ServerEntry | null | undefined>,
     ) {
     }
 
-    selectTreeItem (element?: ServerEntry): void {
+    selectTreeItem(element?: ServerEntry): void {
         this.onServerChange.fire(element);
         if (element) {
             element.outputChannel.show();
         }
     }
 
-    async refresh (exactly?: boolean): Promise<void> {
+    async refresh(exactly?: boolean): Promise<void> {
         await container.loadFromConfigurations(exactly);
         this._children.forEach(child => child.dispose());
         const apps = container.getApplications();
@@ -176,28 +176,31 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         return void 0;
     }
 
-    getTreeItem (element: ServerEntry): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    getTreeItem(element: ServerEntry): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return element;
     }
 
-    getChildren (element?: ServerEntry): vscode.ProviderResult<ServerEntry[]> {
+    getChildren(element?: ServerEntry): vscode.ProviderResult<ServerEntry[]> {
         return this._children;
     }
 
-    async commandAddTreeItem (): Promise<void> {
+    async commandAddTreeItem(): Promise<void> {
         const state = await multiStepInput(this.context);
-        const srcPath =  state.selectedAppSource.sourcePath;
+        const srcPath = state.selectedAppSource.sourcePath;
         if (!state.valid || !srcPath) {
             vscode.window.showErrorMessage("Application service creation failed");
             return;
         }
 
-        await this._createAndRegisterApp(srcPath, state.selectedAppSource.type);
+        const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.path };
+
+        await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);
         return void 0;
     }
 
-    private async _createAndRegisterApp (source: string, type: AppTypes): Promise<IRunnable> {
-        const app = await container.createApplication(type);
+    private async _createAndRegisterApp(source: string, type: AppTypes, workspace: Workspace): Promise<IRunnable> {
+        const app = await container.createApplication(type, workspace);
+        app.config.workspace = workspace;
         try {
             await app.copyAppSources(source);
             await accessor.writeConfigApplication(app.config);
@@ -209,7 +212,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         }
     }
 
-    async commandDeleteServer (element: ServerEntry): Promise<void> {
+    async commandDeleteServer(element: ServerEntry): Promise<void> {
         const Yn = await vscode.window.showQuickPick(["Yes", "No"], {
             placeHolder: "Are you sure you want to delete the server?"
         });

@@ -76,6 +76,12 @@ export class PropertyTreeDataProvider implements vscode.TreeDataProvider<Propert
                         { key: element.label!, value: "", changeable: true },
                         element.getServer(),
                         { isTitle: true, redrawEmitter: element.onDidChangeTreeData }
+                    ),
+                    new PropertyEntry(
+                        this.context,
+                        this._onDidChangeTreeData,
+                        { key: element.getServer().getWorkspace()!.name, value: "", changeable: false },
+                        element.getServer(),
                     )
                 );
             this.refresh();

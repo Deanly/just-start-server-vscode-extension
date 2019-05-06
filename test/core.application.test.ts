@@ -51,7 +51,7 @@ class Test extends ConfigurationAccessor implements here.IRunnable {
             id: "testIns",
             name: "testInsName",
             type: "test",
-            properties: []
+            properties: [],
         });
     }
 }
