@@ -15,7 +15,7 @@ class TestIns extends here.ConfigurationAccessor {
             name: "Hi",
             properties: [
                 { key: "hello", value: "world", changeable: true },
-            ]
+            ],
         });
     }
 }
@@ -159,11 +159,10 @@ suite("core.configuration", function () {
 
 
 import * as here2 from "../src/core/application";
-import { Uri } from "vscode";
 
 const tomcatPathForTest = path.join(__dirname, "..", "..", "test", "apps", "apache-tomcat-8.5.28");
 
-here2.container.initialize(Uri.file(__dirname));
+here2.container.initialize();
 
 suite("core.configuration dependent core.application", function () {
 

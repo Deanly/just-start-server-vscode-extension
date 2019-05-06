@@ -1,5 +1,6 @@
 import { IRunnable, AppTypes, Status } from "../core/application";
 import { ConfigurationAccessor } from "../core/configuration";
+import { Uri } from "vscode";
 
 export default class SpringBoot extends ConfigurationAccessor implements IRunnable {
     countOfAvailablePorts = 1;
@@ -8,6 +9,7 @@ export default class SpringBoot extends ConfigurationAccessor implements IRunnab
 
     constructor (
         public readonly id: string,
+        public readonly workspaceUri: Uri,
     ) {
         super({
             id,
@@ -15,7 +17,7 @@ export default class SpringBoot extends ConfigurationAccessor implements IRunnab
             name: "SpringBoot",
             properties: [
                 { key: "hi", value: "test", changeable: true },
-            ]
+            ],
         });
     }
 

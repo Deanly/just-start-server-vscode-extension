@@ -6,6 +6,7 @@ import * as app from "./core/application";
 
 import { ServerTreeDataProvider, ServerEntry } from "./views/serverExplorer";
 import { PropertyTreeDataProvider, PropertyEntry } from "./views/propertyExplorer";
+import { h } from "./core/supports";
 
 let onServerChange: vscode.EventEmitter<ServerEntry|null|undefined>;
 let propertyTreeDataProvider: PropertyTreeDataProvider;
@@ -59,7 +60,7 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
         setTimeout(() => initialize(context, --n), 100);
         return void 0;
     }
-    app.container.initialize(vscode.workspace.workspaceFolders![0].uri);
+    app.container.initialize();
     config.accessor.initialize(context.storagePath);
     app.container.loadFromConfigurations();
 }
@@ -67,7 +68,7 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
 function hError(e: Error) {
     console.error(e);
 
-    if (config.ConfigurationError.match(e, config.ConfigurationError.BrokenConfigFile)) {
+    if (h.matchError(e, config.ConfigurationError.BrokenConfigFile)) {
         vscode.window.showErrorMessage(e.toString());
         config.accessor.reset()
             .then(() => {
