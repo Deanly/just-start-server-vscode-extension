@@ -94,13 +94,13 @@ export class ServerEntry extends vscode.TreeItem {
             this.outputChannel.appendLine("");
             this.outputChannel.appendLine(getMessage("M_AP_DPLY"));
             this.outputChannel.appendLine("");
-            await util.setTimeoutPromise(() => {}, 2000);
+            await util.setTimeoutPromise(() => {}, 1000);
             if (isDebug) {
                 await this.server.debug(this.outputChannel);
             } else {
                 await this.server.start(this.outputChannel);
             }
-            await util.setTimeoutPromise(() => {}, 3000);
+            await util.setTimeoutPromise(() => {}, 1000);
             this.server.status = Status.RUNNING;
             this.isDebug = isDebug;
         } catch (e) {
@@ -109,6 +109,7 @@ export class ServerEntry extends vscode.TreeItem {
             throw e;
         }
         this.redraw();
+        this.outputChannel.show();
         this.busy = false;
     }
 
