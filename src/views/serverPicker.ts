@@ -192,8 +192,7 @@ export async function multiStepInput(context: ExtensionContext) {
     function shouldResume() {
         // Could show a notification with the option to resume.
         return new Promise<boolean>((resolve, reject) => {
-            vscode.window.showErrorMessage("Canceled");
-            reject("Canceled");
+            reject(new h.ExtError("M_SP_CNCD").information());
         });
     }
 

@@ -77,7 +77,11 @@ function hError(e: Error) {
                 propertyTreeDataProvider.refresh();
             });
     } else {
-        vscode.window.showErrorMessage(e.toString());
+        if ((e as h.ExtError).info) {
+            vscode.window.showInformationMessage(e.toString());
+        } else {
+            vscode.window.showErrorMessage(e.toString());
+        }
     }
 }
 

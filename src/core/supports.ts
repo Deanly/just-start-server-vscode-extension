@@ -335,8 +335,16 @@ export namespace h {
         ) {
             super(msg);
             if (existsCode(msg) && !code) {
+                this.msg = "";
                 this.code = msg;
             }
+        }
+
+        info: boolean = false;
+
+        information(): ExtError {
+            this.info = true;
+            return this;
         }
 
         toString() {
