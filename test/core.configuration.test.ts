@@ -16,6 +16,7 @@ class TestIns extends here.ConfigurationAccessor {
             properties: [
                 { key: "hello", value: "world", changeable: true },
             ],
+            workspace: { name: "test", path: srcPath }
         });
     }
 }

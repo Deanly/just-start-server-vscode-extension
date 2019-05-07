@@ -17,6 +17,7 @@
     "E_AP_NAVP": "Already exists application",
     "E_AP_IACR": "Inaccessible resources",
     "E_AP_IVIR": "Invalid internal resource",
+    "E_AP_FSVC": "Failed to create server",
 
     "M_AP_DPLY": "Deployment complete",
 

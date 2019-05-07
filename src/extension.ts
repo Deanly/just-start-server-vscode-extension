@@ -68,7 +68,7 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
 function hError(e: Error) {
     console.error(e);
 
-    if (h.matchError(e, config.ConfigurationError.BrokenConfigFile)) {
+    if (h.matchError(e, config.ConfigurationCode.BrokenConfigFile)) {
         vscode.window.showErrorMessage(e.toString());
         config.accessor.reset()
             .then(() => {

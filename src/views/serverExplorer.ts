@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 
 import { util, network, h } from "../core/supports";
-import { container, IRunnable, AppTypes, Status, ApplicationError } from "../core/application";
+import { container, IRunnable, AppTypes, Status, ApplicationCode } from "../core/application";
 import { accessor, ConfigurationAccessor, Workspace } from "../core/configuration";
 
 import { multiStepInput } from "./serverPicker";
@@ -84,7 +84,7 @@ export class ServerEntry extends vscode.TreeItem {
     async runEntry(isDebug: boolean): Promise<void> {
         const prevStatus = this.server.status;
         try {
-            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new h.ExtError(ApplicationError.NotAvailablePort); }
+            if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new h.ExtError(ApplicationCode.NotAvailablePort); }
             if (this.busy) { return; }
             this.busy = true;
             this.server.status = Status.PREPARING;
@@ -188,8 +188,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         const state = await multiStepInput(this.context);
         const srcPath = state.selectedAppSource.sourcePath;
         if (!state.valid || !srcPath) {
-            vscode.window.showErrorMessage("Application service creation failed");
-            return;
+            throw new h.ExtError(ApplicationCode.FailedCreateServer);
         }
 
         const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.path };
@@ -207,7 +206,6 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
             await this.refresh();
             return app;
         } catch (err) {
-            vscode.window.showErrorMessage(err);
             throw err;
         }
     }
