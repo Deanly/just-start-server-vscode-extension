@@ -44,11 +44,10 @@ export function activate (context: vscode.ExtensionContext) {
     setTimeout(() => serverTreeDataProvider.refresh(), 500);
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {
-    // app.container.getApplications().forEach(element => {
-    //     element.dispose();
-    // });
+    app.container.getApplications().forEach(element => {
+        element.dispose();
+    });
 }
 
 function initialize (context: vscode.ExtensionContext, n: number = 10): void {
@@ -66,10 +65,9 @@ function initialize (context: vscode.ExtensionContext, n: number = 10): void {
 }
 
 function hError(e: Error) {
-    console.error(e);
-
     if (h.matchError(e, config.ConfigurationCode.BrokenConfigFile)) {
         vscode.window.showErrorMessage(e.toString());
+        console.error(e);
         config.accessor.reset()
             .then(() => {
                 app.container.reset();
@@ -81,6 +79,7 @@ function hError(e: Error) {
             vscode.window.showInformationMessage(e.toString());
         } else {
             vscode.window.showErrorMessage(e.toString());
+            console.error(e);
         }
     }
 }
