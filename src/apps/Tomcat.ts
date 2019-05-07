@@ -147,7 +147,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             if (await fsw.readable(path.join(this.rootPath, "target"))) {
                 const filename = (await fsw.readdir(path.join(this.rootPath, "target"))).find(n => n.endsWith(".war"));
                 if (filename) {
-                    await this.saveConfigProperties([{ key: "war_path", value: path.join("target", filename) }]);
                     war = path.join(this.rootPath, this.getProperty("war_path")!.value);
                 } else {
                     throw new h.ExtError(ApplicationCode.NotFoundTargetDeploy);
@@ -157,6 +156,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             }
         }
 
+        await this.saveConfigProperties([{ key: "war_path", value: war }]);
         const webapps = path.join(this.getAppPath(), "webapps");
         await fsw.rmrf(webapps);
         await fsw.mkdir(webapps);

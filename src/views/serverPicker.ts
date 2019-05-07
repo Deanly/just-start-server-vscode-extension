@@ -161,46 +161,11 @@ export async function multiStepInput(context: ExtensionContext) {
 
     }
 
-    // async function inputResourceGroupName(input: MultiStepInput, state: Partial<State>) {
-    // 	state.resourceGroup = await input.showInputBox({
-    // 		title,
-    // 		step: 2,
-    // 		totalSteps: 4,
-    // 		value: typeof state.resourceGroup === "string" ? state.resourceGroup : "",
-    // 		prompt: "Choose a unique name for the resource group",
-    // 		validate: validateNameIsUnique,
-    // 		shouldResume: shouldResume
-    // 	});
-    // 	return (input: MultiStepInput) => inputName(input, state);
-    // }
-
-    // async function inputName(input: MultiStepInput, state: Partial<State>) {
-    // 	const additionalSteps = typeof state.resourceGroup === "string" ? 1 : 0;
-    // 	// TODO: Remember current value when navigating back.
-    // 	state.name = await input.showInputBox({
-    // 		title,
-    // 		step: 2 + additionalSteps,
-    // 		totalSteps: 3 + additionalSteps,
-    // 		value: state.name || "",
-    // 		prompt: "Choose a unique name for the Application Service",
-    // 		validate: validateNameIsUnique,
-    // 		shouldResume: shouldResume
-    // 	});
-    // 	return (input: MultiStepInput) => pickRuntime(input, state);
-    // }
-
     function shouldResume() {
-        // Could show a notification with the option to resume.
         return new Promise<boolean>((resolve, reject) => {
             reject(new h.ExtError("M_SP_CNCD").information());
         });
     }
-
-    // async function validateNameIsUnique(name: string) {
-    // 	// ...validate...
-    // 	await new Promise(resolve => setTimeout(resolve, 1000));
-    // 	return name === "vscode" ? "Name not unique" : undefined;
-    // }
 
     async function getAvailableSources(type: AppTypes, token?: CancellationToken): Promise<AppPickItem[]> {
         await new Promise(resolve => setTimeout(resolve, 1000));
