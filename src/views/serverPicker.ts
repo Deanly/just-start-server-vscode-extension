@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons } from "vscode";
-import { AppTypes, validateExecutableApplication, ApplicationError } from "../core/application";
+import { AppTypes, validateExecutableApplication, ApplicationCode } from "../core/application";
 import { getMessage } from "../messages";
 import { h } from "../core/supports";
 
@@ -98,7 +98,7 @@ export async function multiStepInput(context: ExtensionContext) {
             }
 
         } else {
-            throw new h.ExtError(ApplicationError.NotFoundWorkspace);
+            throw new h.ExtError(ApplicationCode.NotFoundWorkspace);
 
         }
     }
@@ -132,7 +132,7 @@ export async function multiStepInput(context: ExtensionContext) {
         const uri = await vscode.window.showOpenDialog(option);
 
         if (!uri || uri.length === 0) {
-            vscode.window.showErrorMessage(getMessage("M_SP_NSLT"));
+            vscode.window.showInformationMessage(getMessage("M_SP_NSLT"));
             return;
         }
 

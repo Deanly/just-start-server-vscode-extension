@@ -19,7 +19,7 @@ suite("apps.tomcat", function () {
             type: "TOMCAT",
             appPath: appTomcat8,
             properties: [],
-            workspacePath: demoPomProject1.path
+            workspace: { name: "test m 01", path: demoPomProject1.path }
         });
         await tomcat.init();
         await tomcat.saveConfig();
@@ -34,7 +34,7 @@ suite("apps.tomcat", function () {
             type: "TOMCAT",
             appPath: appTomcat8,
             properties: [],
-            workspacePath: demoGradleProject1.path
+            workspace: { name: "test g 01", path: demoGradleProject1.path }
         });
 
         await tomcat.init();
@@ -50,7 +50,7 @@ suite("apps.tomcat", function () {
             type: "TOMCAT",
             appPath: appTomcat8,
             properties: [],
-            workspacePath: demoGradleProject2.path
+            workspace: { name: "test g 02", path: demoGradleProject2.path }
         });
 
         await tomcat.init();

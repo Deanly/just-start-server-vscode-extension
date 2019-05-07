@@ -20,7 +20,7 @@ export function findClassModule(type: AppTypes) {
     switch (type) {
         case AppTypes.TOMCAT: return Tomcat;
         case AppTypes.SPRING_BOOT: return SpringBoot;
-        default: throw new h.ExtError(ApplicationError.NoValidAppType);
+        default: throw new h.ExtError(ApplicationCode.NoValidAppType);
     }
 }
 
@@ -71,7 +71,7 @@ export async function validateExecutableApplication(type: AppTypes, path: string
     return true;
 }
 
-export const ApplicationError = {
+export const ApplicationCode = {
     FatalFailure: "E_AP_FAIL",
     NotReady: "E_AP_NTRY",
     NotFound: "E_AP_NTFN",
@@ -81,7 +81,8 @@ export const ApplicationError = {
     NoValidAppType: "E_AP_NVAT",
     NotAvailablePort: "E_AP_NAVP",
     InaccessibleResources: "E_AP_IACR",
-    InvalidInternalResource: "E_AP_IVIR"
+    InvalidInternalResource: "E_AP_IVIR",
+    FailedCreateServer: "E_AP_FSVC",
 }
 
 export namespace container {
@@ -95,7 +96,7 @@ export namespace container {
     }
 
     export async function createApplication(type: AppTypes, workspace?: Workspace, id?: string): Promise<IRunnable & ConfigurationAccessor> {
-        if (!workspace) { throw new h.ExtError(ApplicationError.NotFoundWorkspace); }
+        if (!workspace) { throw new h.ExtError(ApplicationCode.NotFoundWorkspace); }
         id = id || "App" + Date.now();
         const App: any = findClassModule(type);
         return new App(id, Uri.file(workspace.path));

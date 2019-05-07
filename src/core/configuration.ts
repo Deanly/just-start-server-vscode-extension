@@ -18,12 +18,13 @@ export interface Workspace {
 export interface ConfigApplication {
     id: string;
     name: string;
-    version?: string;
     type: string;
+    properties: ConfigProperty[];
+
+    version?: string;
     workspace?: Workspace;
     oriPath?: string;
     appPath?: string;
-    properties: ConfigProperty[];
 }
 
 interface ConfigFile {
@@ -66,7 +67,7 @@ export class ConfigurationAccessor {
     }
 
     async saveConfig (): Promise<void> {
-        if (!this.config.id || !this.config.type || !this.config.appPath || !this.config.workspace) { throw new h.ExtError(ConfigurationError.ValidationFailed); }
+        if (!this.config.id || !this.config.type || !this.config.appPath || !this.config.workspace) { throw new h.ExtError(ConfigurationCode.ValidationFailed); }
         await accessor.writeConfigApplication(this.config);
         return void 0;
     }
@@ -74,11 +75,11 @@ export class ConfigurationAccessor {
     setConfig (config: ConfigApplication): void {
         this.config.name = config.name;
         this.config.type = config.type;
-        this.config.oriPath = config.oriPath;
-        this.config.appPath = config.appPath;
+        this.config.properties = config.properties;
         this.config.version = config.version;
         this.config.workspace = config.workspace;
-        this.config.properties = config.properties;
+        this.config.oriPath = config.oriPath;
+        this.config.appPath = config.appPath;
         return void 0;
     }
 
@@ -93,7 +94,7 @@ export class ConfigurationAccessor {
 
 }
 
-export const ConfigurationError = {
+export const ConfigurationCode = {
     NotFoundStoragePath: "E_CF_NFSP",
     NotInitialized: "E_CF_NIZD",
     NotFoundConfig: "E_CF_NFCF",
@@ -109,7 +110,7 @@ export namespace accessor {
     let _storageRootPath: string;
 
     export async function initialize(storagePath: string) {
-        if (!storagePath) { throw new h.ExtError(ConfigurationError.NotFoundStoragePath); }
+        if (!storagePath) { throw new h.ExtError(ConfigurationCode.NotFoundStoragePath); }
 
         _storageRootPath = path.join(storagePath, STORAGE_DIR_NAME);
 
@@ -127,7 +128,7 @@ export namespace accessor {
     }
 
     export async function writeJsonFile<T> (file: string, obj: T): Promise<void> {
-        if (!_storageRootPath) { return Promise.reject(new h.ExtError(ConfigurationError.NotInitialized)); }
+        if (!_storageRootPath) { return Promise.reject(new h.ExtError(ConfigurationCode.NotInitialized)); }
 
         const exists = await fsw.exists(_storageRootPath);
         if (!exists) {
@@ -137,7 +138,7 @@ export namespace accessor {
     }
 
     export async function readJsonFile<T> (file: string): Promise<T> {
-        if (!_storageRootPath) { return Promise.reject(new h.ExtError(ConfigurationError.NotInitialized)); }
+        if (!_storageRootPath) { return Promise.reject(new h.ExtError(ConfigurationCode.NotInitialized)); }
 
         const buf = await fsw.readfile(path.join(_storageRootPath, file));
         const str = buf.toString("utf8");
@@ -145,7 +146,7 @@ export namespace accessor {
             return JSON.parse(str);
         } catch (e) {
             console.error(e);
-            throw new h.ExtError(ConfigurationError.BrokenConfigFile);
+            throw new h.ExtError(ConfigurationCode.BrokenConfigFile);
         }
     }
 
@@ -155,7 +156,7 @@ export namespace accessor {
         if (xml.validate(strXml)) {
             return xml.parse(strXml, options);
         } else {
-            throw new h.ExtError(ConfigurationError.ValidationFailed);
+            throw new h.ExtError(ConfigurationCode.ValidationFailed);
         }
     }
 
@@ -181,7 +182,7 @@ export namespace accessor {
         const appPath = path.join(_storageRootPath, id);
         const exists = await fsw.exists(appPath);
         if (!exists) {
-            throw new h.ExtError(ConfigurationError.NotFoundConfig);
+            throw new h.ExtError(ConfigurationCode.NotFoundConfig);
         }
 
         await fsw.rmrf(appPath);
@@ -195,7 +196,7 @@ export namespace accessor {
         const conf = await readJsonFile<ConfigFile>(CONFIG_FILE_NAME);
         const app = conf.apps.find(app => app.id === id);
 
-        if (!app) { throw new h.ExtError(ConfigurationError.NotFoundConfig); }
+        if (!app) { throw new h.ExtError(ConfigurationCode.NotFoundConfig); }
         else { return app; }
     }
 
@@ -226,7 +227,7 @@ export namespace accessor {
         const conf = await readJsonFile<ConfigFile>(CONFIG_FILE_NAME);
         const app = conf.apps.find(app => app.id === id);
 
-        if (!app) { throw new h.ExtError(ConfigurationError.NotFoundConfig); }
+        if (!app) { throw new h.ExtError(ConfigurationCode.NotFoundConfig); }
 
         if (properties instanceof Array) {
             properties.forEach(property => _appendConfigProperty(app, property, forced));
@@ -244,7 +245,7 @@ export namespace accessor {
             _prop = { ...property };
             app.properties.push(_prop);
         }
-        if (!forced && !_prop.changeable) { throw new h.ExtError(ConfigurationError.WriteProtectedProperty); }
+        if (!forced && !_prop.changeable) { throw new h.ExtError(ConfigurationCode.WriteProtectedProperty); }
 
         _prop.value = property.value;
     }
@@ -252,7 +253,7 @@ export namespace accessor {
 
     export async function detachConfigApplication (id: string): Promise<void> {
         const conf = await readJsonFile<ConfigFile>(CONFIG_FILE_NAME);
-        if (!conf.apps.some(app => app.id === id)) { throw new h.ExtError(ConfigurationError.NotFoundConfig); }
+        if (!conf.apps.some(app => app.id === id)) { throw new h.ExtError(ConfigurationCode.NotFoundConfig); }
 
         conf.count -= 1;
         conf.apps.splice(conf.apps.map(a => a.id).indexOf(id), 1);
