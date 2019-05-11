@@ -7,7 +7,6 @@ import { OutputChannel, DebugConfiguration, debug, workspace, Uri } from "vscode
 import { ChildProcess } from "child_process";
 
 export default class Tomcat extends ConfigurationAccessor implements IRunnable {
-    static readonly countOfAvailablePorts = 3;
 
     protected readonly CONFIG_FILE_PATH = path.join("conf", "server.xml");
     private _process: ChildProcess | undefined;
@@ -148,10 +147,10 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 const filename = (await fsw.readdir(path.join(this.rootPath, "target"))).find(n => n.endsWith(".war"));
                 if (filename) {
                     war = path.join(this.rootPath, this.getProperty("war_path")!.value);
+
                 } else {
                     throw new h.ExtError(ApplicationCode.NotFoundTargetDeploy);
 
-                    // util.executeChildProcess()
                 }
             }
         }

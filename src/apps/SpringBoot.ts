@@ -3,7 +3,6 @@ import { ConfigurationAccessor } from "../core/configuration";
 import { Uri } from "vscode";
 
 export default class SpringBoot extends ConfigurationAccessor implements IRunnable {
-    countOfAvailablePorts = 1;
     type: AppTypes = AppTypes.SPRING_BOOT;
     status: Status = Status.STOP;
 
