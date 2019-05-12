@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons } from "vscode";
 import { AppTypes, validateExecutableApplication, ApplicationCode } from "../core/application";
 import { getMessage } from "../messages";
-import { h } from "../core/supports";
+import { h, util } from "../core/supports";
 
 interface AppPickItem extends QuickPickItem {
     label: string;
@@ -142,12 +142,20 @@ export async function multiStepInput(context: ExtensionContext) {
 
     async function downloadSource (input: MultiStepInput, state: Partial<State>) {
         // TODO(dean): 3/3 Progress bar
-        vscode.window.showInformationMessage(`Download.. '${state.name}'`);
+        // vscode.window.showInformationMessage(`Download.. '${state.name}'`);
 
+        await vscode.window.withProgress({
+            cancellable: false,
+            location: vscode.ProgressLocation.Notification,
+            title: "Downloading..."
+        }, async (progress, token) => {
+            await util.setTimeoutPromise(() => { progress.report({ message: "Test~~", increment: 30 });  }, 4000);
+            await util.setTimeoutPromise(() => { progress.report({ message: "HI~", increment: 80})}, 6000);
+        });
         // ...download...
         // ...unpress...
         // ...prepare temp path...
-        const path = '';
+        const path = "";
 
         if (await validateExecutableApplication(state.selectedAppSource!.type!, path, state.selectedAppSource!.version)) {
             state.valid = true;
