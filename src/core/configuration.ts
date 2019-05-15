@@ -53,7 +53,7 @@ export class ConfigurationAccessor {
     public setName (v: string) { this.config.name = v; }
     public setVersion (v: string) { this.config.version = v; }
 
-    async copyAppSources (src: string, progress?: (mark: number, come: number) => void): Promise<void> {
+    async copyAppSources (src: string, progress?: (mark: number, come: number, name: string) => void): Promise<void> {
         this.config.oriPath = src;
         this.config.appPath = await accessor.copyAppFsSource(src, this.config.id, progress);
         await this.saveConfig();
@@ -167,7 +167,7 @@ export namespace accessor {
         await fsw.writefile(file, buf);
     }
 
-    export async function copyAppFsSource (src: string, id: string, progress?: (mark: number, come: number) => void): Promise<string> {
+    export async function copyAppFsSource (src: string, id: string, progress?: (mark: number, come: number, name: string) => void): Promise<string> {
         const appPath = path.join(_storageRootPath, id);
         const exists = await fsw.exists(appPath);
         if (!exists) {

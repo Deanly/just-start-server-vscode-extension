@@ -24,5 +24,9 @@
     "M_SP_NSLT": "No Selected",
     "M_SP_CNCD": "Canceled",
 
+    "M_TP_COPY": "Copying..",
+    "M_TP_DNLD": "Downloading..",
+    "M_TP_DONE": "The work is complete.",
+
     "END": "END"
 }

@@ -194,6 +194,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.path };
 
         await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);
+        vscode.window.showInformationMessage(getMessage("M_TP_DONE"));
         return void 0;
     }
 
@@ -201,8 +202,21 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         const app = await container.createApplication(type, workspace);
         app.config.workspace = workspace;
         try {
-            await app.copyAppSources(source);
-            await accessor.writeConfigApplication(app.config);
+            await vscode.window.withProgress({
+                cancellable: false,
+                location: vscode.ProgressLocation.Notification,
+                title: getMessage("M_TP_COPY")
+            }, async (progress, token) => {
+                let last = Date.now();
+                await app.copyAppSources(source, (mark, come, name) => {
+                    if (Date.now() - last > 200) {
+                        last = Date.now();
+                        progress.report({ increment: Math.round(come / mark * 80), message: ` (${name})` });
+                    }
+                });
+                progress.report({ increment: 90 });
+                await accessor.writeConfigApplication(app.config);
+            });
             await this.refresh();
             return app;
         } catch (err) {
