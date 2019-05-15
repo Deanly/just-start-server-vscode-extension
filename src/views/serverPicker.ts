@@ -141,16 +141,14 @@ export async function multiStepInput(context: ExtensionContext) {
     }
 
     async function downloadSource (input: MultiStepInput, state: Partial<State>) {
-        // TODO(dean): 3/3 Progress bar
-        // vscode.window.showInformationMessage(`Download.. '${state.name}'`);
-
         await vscode.window.withProgress({
             cancellable: false,
             location: vscode.ProgressLocation.Notification,
             title: "Downloading..."
         }, async (progress, token) => {
             await util.setTimeoutPromise(() => { progress.report({ message: "Test~~", increment: 30 });  }, 4000);
-            await util.setTimeoutPromise(() => { progress.report({ message: "HI~", increment: 80})}, 6000);
+            await util.setTimeoutPromise(() => { progress.report({ message: "HI~", increment: 80}); }, 6000);
+            await util.setTimeoutPromise(() => {}, 2000);
         });
         // ...download...
         // ...unpress...
