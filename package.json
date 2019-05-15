@@ -106,12 +106,14 @@
                 "title": "Delete"
             }
         ],
-        "keybindings": [{
-            "command": "serverExplorer.rerunEntry",
-            "key": "f5",
-            "mac": "f5",
-            "when": "editorTextFocus"
-        }],
+        "keybindings": [
+            {
+                "command": "serverExplorer.rerunEntry",
+                "key": "f5",
+                "mac": "f5",
+                "when": "editorTextFocus"
+            }
+        ],
         "menus": {
             "view/title": [
                 {
@@ -170,6 +172,7 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
+        "@types/axios": "^0.14.0",
         "@types/mkdirp": "^0.5.2",
         "@types/mocha": "^2.2.42",
         "@types/node": "^8.10.25",
@@ -179,6 +182,7 @@
         "vscode": "^1.1.33"
     },
     "dependencies": {
+        "axios": "^0.18.0",
         "fast-xml-parser": "^3.12.13",
         "mkdirp": "^0.5.1",
         "rimraf": "^2.6.3"
