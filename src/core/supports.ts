@@ -5,6 +5,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
+import axios from "axios";
 import { spawn, SpawnOptions, ChildProcess } from "child_process";
 
 export namespace fsw {
@@ -75,10 +76,14 @@ export namespace fsw {
         });
     }
 
-    export function writefile(path: string, content: Buffer): Promise<void> {
+    export function writefile(path: string, content: Buffer, options?: string | {
+        encoding?: string | null | undefined;
+        mode?: string | number | undefined;
+        flag?: string | undefined;
+    }): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             // console.log(new Date(), "writeFile", content.toString());
-            fs.writeFile(path, content, err => handleResult(resolve, reject, err, void 0));
+            fs.writeFile(path, content, options, err => handleResult(resolve, reject, err, void 0));
         });
     }
 
@@ -154,7 +159,7 @@ export namespace fsw {
         }
     }
 
-    export function copydir(src: string, dest: string, progress?: (mark: number, come: number) => void): Promise<void> {
+    export function copydir(src: string, dest: string, progress?: (mark: number, come: number, name: string) => void): Promise<void> {
         return new Promise((resolve, reject) => {
             let _g = 0, _n = 0;
             const recursive = async function (t: string): Promise<void> {
@@ -163,7 +168,7 @@ export namespace fsw {
                 for (let i = 0; i < arr.length; i++) {
                     _n++;
                     if (arr[i].startsWith(".")) { continue; }
-                    if (progress) { progress(_g, _n); }
+                    if (progress) { progress(_g, _n, arr[i]); }
                     if (isDirSync(path.join(src, t, arr[i]))) {
                         await mkdir(path.join(dest, t, arr[i]));
                         await recursive(path.join(t, arr[i]));
@@ -255,6 +260,23 @@ export namespace network {
                         .close();
                 })
                 .listen(port);
+        });
+    }
+
+    export async function downloadFile(url: string, path: string): Promise<string> {
+        const writer = fs.createWriteStream(path);
+
+        const response = await axios({
+          url,
+          method: "GET",
+          responseType: "stream"
+        });
+
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+          writer.on("finish", resolve);
+          writer.on("error", reject);
         });
     }
 

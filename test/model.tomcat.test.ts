@@ -9,7 +9,7 @@ const demoGradleProject2 = Uri.file(path.join(__dirname, "..", "..", "test", "de
 
 const appTomcat8 = path.join(__dirname, "..", "..", "test", "apps", "apache-tomcat-8.5.28");
 
-suite("apps.tomcat", function () {
+suite.skip("apps.tomcat", function () {
 
     test("deploy maven war 01", async function () {
         const tomcat = new Tomcat("test01", demoPomProject1);
