@@ -14,7 +14,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     rootPath: string;
     type: AppTypes = AppTypes.TOMCAT;
     status: Status = Status.STOP;
-    command: { start: string, stop: string, version: string, maven: string, gradle: string };
+    command: { maven: string, gradle: string };
 
     constructor(
         public readonly id: string,
@@ -33,23 +33,17 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             ],
         });
         this.rootPath = workspaceUri.path;
-        this.command = { start: "", stop: "", version: "", maven: "", gradle: "" };
+        this.command = { maven: "", gradle: "" };
     }
 
     async init(): Promise<void> {
         if (util.getOsType() === util.OsType.WINDOWS_NT) {
             this.command = {
-                start: path.join(this.getAppPath(), "bin", "startup.bat"),
-                stop: path.join(this.getAppPath(), "bin", "shutdown.bat"),
-                version: path.join(this.getAppPath(), "bin", "version.bat"),
                 maven: "mvn",
                 gradle: path.join(this.rootPath, "gradlew.bat"),
             };
         } else {
             this.command = {
-                start: path.join(this.getAppPath(), "bin", "startup.sh"),
-                stop: path.join(this.getAppPath(), "bin", "shutdown.sh"),
-                version: path.join(this.getAppPath(), "bin", "version.sh"),
                 maven: "mvn",
                 gradle: path.join(this.rootPath, "gradlew"),
             };
@@ -81,7 +75,14 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
     async findVersion(): Promise<string> {
         const output: Array<string> = [];
-        await util.executeChildProcess(this.command.version, { shell: true }, [], output);
+        try {
+            await util.executeChildProcess("java", { shell: true }, [
+                `-classpath "${path.join(this.getAppPath(), "lib", "catalina.jar")}"`,
+                `org.apache.catalina.util.ServerInfo`,
+            ], output);
+        } catch (e) {
+            return Promise.reject(e);
+        }
 
         const str = output.join("").split("\n").find(s => !!s.replace(/\s/gi, "").toLowerCase().match(/servernumber/));
         if (str) {
