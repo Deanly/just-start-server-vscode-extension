@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons } from "vscode";
 import { AppTypes, validateExecutableApplication, ApplicationCode } from "../core/application";
 import { getMessage } from "../messages";
-import { h, util } from "../core/supports";
+import { h, util, network, fsw } from "../core/supports";
 
 interface AppPickItem extends QuickPickItem {
     label: string;
@@ -20,7 +21,8 @@ const applicationTypes: AppPickItem[] = [
 const applicationSources: AppPickItem[] = [
     { label: "Manually selecting a server folder...", type: AppTypes.TOMCAT },
     { label: "Manually selecting a server folder...", type: AppTypes.SPRING_BOOT },
-    { label: "Tomcat-0.0.0", version: "0.0.0-alpha", type: AppTypes.TOMCAT, download: "http://" }
+    { label: "Tomcat-9.0.20", version: "9.0.20", type: AppTypes.TOMCAT, download: "http://apache.mirror.cdnetworks.com/tomcat/tomcat-9/v9.0.20/bin/apache-tomcat-9.0.20.zip" },
+    { label: "Tomcat-8.5.41", version: "8.5.41", type: AppTypes.TOMCAT, download: "http://apache.mirror.cdnetworks.com/tomcat/tomcat-8/v8.5.41/bin/apache-tomcat-8.5.41.zip" },
 ];
 
 interface WorkspacePickItem extends QuickPickItem {
@@ -53,14 +55,14 @@ export async function multiStepInput(context: ExtensionContext) {
         return state as State;
     }
 
-    const title = "Select Application Service";
+    const title = getMessage("M_TP_PMTL");
 
     async function pickApplicationType(input: MultiStepInput, state: Partial<State>) {
         state.selectedAppType = await input.showQuickPick<AppPickItem, QuickPickParameters<AppPickItem>>({
             title,
             step: 1,
             totalSteps: 3,
-            placeholder: "Pick a application server type",
+            placeholder: getMessage("M_TP_PCK1"),
             items: applicationTypes,
             shouldResume: shouldResume
         });
@@ -80,7 +82,7 @@ export async function multiStepInput(context: ExtensionContext) {
                     title,
                     step: state.step,
                     totalSteps: state.totalSteps,
-                    placeholder: "Pick a application server type",
+                    placeholder: getMessage("M_TP_PCK2"),
                     items: workspaceFolders!.map(folders => { return { uri: folders.uri, label: folders.name, index: folders.index }; }),
                     shouldResume: shouldResume
                 }));
@@ -111,7 +113,7 @@ export async function multiStepInput(context: ExtensionContext) {
             totalSteps: state.totalSteps!,
             items: sources,
             activeItem: state.selectedAppSource,
-            placeholder: "Pick a application source",
+            placeholder: getMessage("M_TP_PCK3"),
             shouldResume
         });
 
@@ -129,42 +131,66 @@ export async function multiStepInput(context: ExtensionContext) {
 
     async function lookForSourcePath (input: MultiStepInput, state: Partial<State>) {
         const option: vscode.OpenDialogOptions = { canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select Folder' };
-        const uri = await vscode.window.showOpenDialog(option);
+        const uris = await vscode.window.showOpenDialog(option);
 
-        if (!uri || uri.length === 0) {
+        if (!uris || uris.length === 0) {
             vscode.window.showInformationMessage(getMessage("M_SP_NSLT"));
             return;
         }
 
-        state.valid = await validateExecutableApplication(state.selectedAppSource!.type!, uri[0].path);
-        state.selectedAppSource!.sourcePath = uri[0].path;
+        state.valid = await validateExecutableApplication(state.selectedAppSource!.type!, uris[0].path);
+        state.selectedAppSource!.sourcePath = uris[0].path;
     }
 
     async function downloadSource (input: MultiStepInput, state: Partial<State>) {
+        let appPath = "";
+        const procValidApp = async function () {
+            if (await validateExecutableApplication(state.selectedAppSource!.type!, appPath, state.selectedAppSource!.version)) {
+                state.valid = true;
+            } else {
+                if ((await fsw.readdir(appPath)).length === 1) {
+                    const targetPath = path.join(appPath, (await fsw.readdir(appPath))[0]);
+                    await fsw.copydir(targetPath, appPath);
+                    await procValidApp();
+                } else {
+                    fsw.rmrfSync(appPath);
+                    state.valid = false;
+                    return;
+                }
+            }
+        };
+
         await vscode.window.withProgress({
-            cancellable: false,
+            cancellable: true,
             location: vscode.ProgressLocation.Notification,
-            title: "Downloading..."
+            title: getMessage("M_TP_DNLD")
         }, async (progress, token) => {
-            await util.setTimeoutPromise(() => { progress.report({ message: "Test~~", increment: 30 });  }, 4000);
-            await util.setTimeoutPromise(() => { progress.report({ message: "HI~", increment: 80}); }, 6000);
-            await util.setTimeoutPromise(() => {}, 2000);
+            appPath = path.join(state.selectedWorkspace!.uri.path, ".vscode", "ext_jss", "temp_dn", Date.now().toString(36));
+            fsw.mkdirSync(appPath);
+            state.selectedAppSource!.sourcePath = appPath;
+            try {
+                let barPercent = 0;
+                await network.downloadFile(state.selectedAppSource!.download!, path.join(appPath, "app.zip"), (incr, curr, total) => {
+                    const percent = curr / total * 100;
+                    if (Math.floor(percent - barPercent) > 0) {
+                        progress.report({ increment: Math.floor(percent - barPercent), message: ` (${percent.toFixed(2)}%)` });
+                        barPercent = percent;
+                    } else {
+                        progress.report({ message: ` (${percent.toFixed(2)}%)` });
+                    }
+                    return !token.isCancellationRequested;
+                });
+                if (token.isCancellationRequested) { throw new Error("Cancel"); }
+                await util.unzip(path.join(appPath, "app.zip"), appPath);
+                await util.setTimeoutPromise(() => {}, 500);
+                await fsw.rmrfSync(path.join(appPath, "app.zip"));
+                await procValidApp();
+
+            } catch (e) {
+                fsw.rmrfSync(appPath);
+                return shouldResume();
+            }
         });
-        // ...download...
-        // ...unpress...
-        // ...prepare temp path...
-        const path = "";
-
-        if (await validateExecutableApplication(state.selectedAppSource!.type!, path, state.selectedAppSource!.version)) {
-            state.valid = true;
-            state.selectedAppSource!.sourcePath = path;
-
-        } else {
-            state.valid = false;
-
-        }
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
     }
 
     function shouldResume() {

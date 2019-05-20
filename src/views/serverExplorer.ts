@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 
-import { util, network, h } from "../core/supports";
+import { util, network, h, fsw } from "../core/supports";
 import { container, IRunnable, AppTypes, Status, ApplicationCode } from "../core/application";
 import { accessor, ConfigurationAccessor, Workspace } from "../core/configuration";
 
@@ -188,12 +188,18 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         const state = await multiStepInput(this.context);
         const srcPath = state.selectedAppSource.sourcePath;
         if (!state.valid || !srcPath) {
+            if (srcPath && state.selectedAppSource.download) { fsw.rmrfSync(srcPath); }
             throw new h.ExtError(ApplicationCode.FailedCreateServer);
         }
 
         const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.path };
 
-        await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);
+        try {
+            await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);
+        } catch (e) {
+            if (state.selectedAppSource.download) { fsw.rmrfSync(srcPath); }
+            throw e;
+        }
         vscode.window.showInformationMessage(getMessage("M_TP_DONE"));
         return void 0;
     }

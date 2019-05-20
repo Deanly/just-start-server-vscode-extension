@@ -27,6 +27,10 @@
     "M_TP_COPY": "Copying..",
     "M_TP_DNLD": "Downloading..",
     "M_TP_DONE": "The work is complete.",
+    "M_TP_PMTL": "Add server",
+    "M_TP_PCK1": "Pick a application server type",
+    "M_TP_PCK2": "Select the workspace the server will use.",
+    "M_TP_PCK3": "Pick a application source",
 
     "END": "END"
 }

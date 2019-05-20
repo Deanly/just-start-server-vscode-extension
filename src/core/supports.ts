@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import mkdirp from "mkdirp";
 import rimraf from "rimraf";
 import axios from "axios";
+import unzipper from "unzipper";
 import { spawn, SpawnOptions, ChildProcess } from "child_process";
 
 export namespace fsw {
@@ -263,20 +264,31 @@ export namespace network {
         });
     }
 
-    export async function downloadFile(url: string, path: string): Promise<string> {
-        const writer = fs.createWriteStream(path);
-
+    export async function downloadFile(url: string, path: string, progress?: (increment: number, current: number, total: number) => boolean): Promise<void> {
         const response = await axios({
-          url,
-          method: "GET",
-          responseType: "stream"
+            url,
+            method: "GET",
+            headers: {
+                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36"
+            },
+            responseType: "stream",
         });
 
-        response.data.pipe(writer);
+        if (typeof progress !== "function") { progress = function () { return true; }; }
 
         return new Promise((resolve, reject) => {
-          writer.on("finish", resolve);
-          writer.on("error", reject);
+            const writer = fs.createWriteStream(path);
+            let before = 0;
+            writer.on("drain", () => {
+                if (!progress!(writer.bytesWritten - before, writer.bytesWritten, parseInt(response.headers["content-length"]))) {
+                    writer.destroy();
+                }
+                before = writer.bytesWritten;
+            });
+            writer.on("finish", resolve);
+            writer.on("error", reject);
+
+            response.data.pipe(writer);
         });
     }
 
@@ -343,6 +355,16 @@ export namespace util {
             if (escape) {
                 setTimeout(() => resolve(process), 200);
             }
+        });
+    }
+
+    export function unzip (zipPath: string, outputPath: string) {
+        return new Promise((resolve, reject) => {
+            const stream = fs.createReadStream(zipPath);
+            stream.on("end", resolve);
+            stream.on("error", reject);
+
+            stream.pipe(unzipper.Extract({ path: outputPath }));
         });
     }
 }
