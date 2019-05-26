@@ -82,6 +82,7 @@ export class ServerEntry extends vscode.TreeItem {
     }
 
     async runEntry(isDebug: boolean): Promise<void> {
+        if (!await fsw.exists(this.server.getAppPath())) { throw new h.ExtError(this.server.getAppPath(), ApplicationCode.NotFound); }
         const prevStatus = this.server.status;
         try {
             if (!(await network.checkAvailablePort(this.server.getServicePort()))) { throw new h.ExtError(ApplicationCode.NotAvailablePort); }
@@ -118,6 +119,7 @@ export class ServerEntry extends vscode.TreeItem {
         this.busy = true;
         const prevStatus = this.server.status;
         try {
+            if (!await fsw.exists(this.server.getAppPath())) { throw new h.ExtError(this.server.getAppPath(), ApplicationCode.NotFound); }
             this.server.status = Status.PREPARING;
             this.redraw();
             await this.server.stop(this.outputChannel);
@@ -197,9 +199,9 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         try {
             await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);
         } catch (e) {
-            if (state.selectedAppSource.download) { fsw.rmrfSync(srcPath); }
             throw e;
         }
+        if (state.selectedAppSource.download) { fsw.rmrfSync(srcPath); }
         vscode.window.showInformationMessage(getMessage("M_TP_DONE"));
         return void 0;
     }
@@ -214,7 +216,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
                 title: getMessage("M_TP_COPY")
             }, async (progress, token) => {
                 let last = Date.now();
-                await app.copyAppSources(source, (mark, come, name) => {
+                await app.copyAppSources(source, workspace, (mark, come, name) => {
                     if (Date.now() - last > 200) {
                         last = Date.now();
                         progress.report({ increment: Math.round(come / mark * 80), message: ` (${name})` });
@@ -236,13 +238,21 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
         });
 
         if (Yn === "Yes") {
-            const server = element.getServer();
-            await accessor.rmAppFsSource(server.getId());
-            await accessor.detachConfigApplication(server.getId());
+            await this._deleteServer(element);
             await this.refresh(true);
             this.onServerChange.fire(undefined);
         }
         return void 0;
+    }
+
+    private async _deleteServer(element: ServerEntry): Promise<void> {
+        const server = element.getServer();
+        try {
+            await accessor.rmAppFsSource(server.getId(), server.config.workspace!.path);
+        } catch (e) {
+            console.error(e);
+        }
+        await accessor.detachConfigApplication(server.getId());
     }
 
 

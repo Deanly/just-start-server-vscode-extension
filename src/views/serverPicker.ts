@@ -130,7 +130,7 @@ export async function multiStepInput(context: ExtensionContext) {
     }
 
     async function lookForSourcePath (input: MultiStepInput, state: Partial<State>) {
-        const option: vscode.OpenDialogOptions = { canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select Folder' };
+        const option: vscode.OpenDialogOptions = { canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: "Select Folder" };
         const uris = await vscode.window.showOpenDialog(option);
 
         if (!uris || uris.length === 0) {
@@ -151,6 +151,7 @@ export async function multiStepInput(context: ExtensionContext) {
                 if ((await fsw.readdir(appPath)).length === 1) {
                     const targetPath = path.join(appPath, (await fsw.readdir(appPath))[0]);
                     await fsw.copydir(targetPath, appPath);
+                    fsw.rmrfSync(targetPath);
                     await procValidApp();
                 } else {
                     fsw.rmrfSync(appPath);
@@ -201,7 +202,14 @@ export async function multiStepInput(context: ExtensionContext) {
 
     async function getAvailableSources(type: AppTypes, token?: CancellationToken): Promise<AppPickItem[]> {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return applicationSources.filter(pick => pick.type === type);
+        return applicationSources
+            .filter(pick => pick.type === type)
+            .map(source => {
+                if (source.download) {
+                    source.label = `${source.label} (${source.download})`;
+                }
+                return source;
+            });
     }
 
     return await collectInputs();

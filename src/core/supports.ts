@@ -347,7 +347,7 @@ export namespace util {
             });
             process.on("exit", (code: number) => {
                 if (code !== 0) {
-                    reject(new Error(`Failed execute child process ${code}`));
+                    reject(new Error(`Failed execute child process ${code}: ${command} ${args.join(" ")}`));
                 } else {
                     resolve(process);
                 }

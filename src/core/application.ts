@@ -2,7 +2,7 @@
 
 import { ConfigurationAccessor, accessor, ConfigApplication, Workspace } from "./configuration";
 
-import { h } from "../core/supports";
+import { h, fsw } from "../core/supports";
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
 import { OutputChannel, Uri } from "vscode";
@@ -26,7 +26,7 @@ export function findClassModule(type: AppTypes) {
 
 /**
  * This enum represents the state of the application.
- * The string value of Enum is used in "view/item/context" in the packge.json file.
+ * The string value of Enum is used in "view/item/context" in the package.json file.
  */
 export enum Status {
     RUNNING = "running",
@@ -107,13 +107,21 @@ export namespace container {
         if (exactly) { _cache.length = 0; }
 
         if (config.apps.some(app => !app.appPath || !app.workspace)) {
-            await config.apps.forEach(async (app, i) => {
+            config.apps.forEach(async (app, i) => {
                 if (!app.appPath || !app.workspace) {
                     await accessor.detachConfigApplication(app.id);
                     (config.apps as any)[i] = undefined;
                 }
             });
         }
+
+        config.apps.forEach(async (app, i) => {
+            if (!(await validateExecutableApplication(AppTypes[app.type as AppTypes], app.appPath!, app.version))) {
+                await accessor.detachConfigApplication(app.id);
+                (config.apps as any)[i] = undefined;
+            }
+        });
+
         const appConfigs = config.apps
             .filter(app => app !== undefined)
             .filter(app => !_cache.some(loaded => loaded.getId() === app.id));

@@ -282,7 +282,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             if (!(await fsw.readable(path.join(this.getAppPath(), "bin", "tomcat-juli.jar")))) { return false; }
             if (!(await fsw.readable(path.join(this.getAppPath(), "lib")))) { return false; }
         } catch (ignore) {
-            console.log("debug", "validateSource", ignore);
             return false;
         }
         return true;
