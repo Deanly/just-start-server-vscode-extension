@@ -46,7 +46,7 @@ suite("core.configuration", function () {
 
     test("Add app-ins to config file", async function () {
         try {
-            await ins.copyAppSources(srcPath);
+            await ins.copyAppSources(srcPath, { path: storagePath, name: "testworkspace" });
             const configFile = await here.accessor.readConfigFile();
             assert.equal(configFile.count, 1);
         } catch (e) {
@@ -115,7 +115,7 @@ suite("core.configuration", function () {
 
     test("Remove source", async function () {
         try {
-            await here.accessor.rmAppFsSource(ins.getId());
+            await here.accessor.rmAppFsSource(ins.getId(), storagePath);
         } catch (e) {
             assert.ifError(e);
         }

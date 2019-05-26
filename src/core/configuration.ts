@@ -53,9 +53,9 @@ export class ConfigurationAccessor {
     public setName (v: string) { this.config.name = v; }
     public setVersion (v: string) { this.config.version = v; }
 
-    async copyAppSources (src: string, progress?: (mark: number, come: number, name: string) => void): Promise<void> {
+    async copyAppSources (src: string, workspace: Workspace, progress?: (mark: number, come: number, name: string) => void): Promise<void> {
         this.config.oriPath = src;
-        this.config.appPath = await accessor.copyAppFsSource(src, this.config.id, progress);
+        this.config.appPath = await accessor.copyAppFsSource(src, this.config.id, workspace.path, progress);
         await this.saveConfig();
         return void 0;
     }
@@ -167,8 +167,13 @@ export namespace accessor {
         await fsw.writefile(file, buf);
     }
 
-    export async function copyAppFsSource (src: string, id: string, progress?: (mark: number, come: number, name: string) => void): Promise<string> {
-        const appPath = path.join(_storageRootPath, id);
+    export async function copyAppFsSource (src: string, id: string, dest?: string, progress?: (mark: number, come: number, name: string) => void): Promise<string> {
+        let appPath;
+        if (dest) {
+            appPath = path.join(dest, ".vscode", "ext_jss", "apps", id);
+        } else {
+            appPath = path.join(_storageRootPath, id);
+        }
         const exists = await fsw.exists(appPath);
         if (!exists) {
             await fsw.mkdir(appPath);
@@ -178,10 +183,13 @@ export namespace accessor {
         return appPath;
     }
 
-    export async function rmAppFsSource (id: string): Promise<void> {
-        const appPath = path.join(_storageRootPath, id);
-        const exists = await fsw.exists(appPath);
-        if (!exists) {
+    export async function rmAppFsSource (id: string, target: string): Promise<void> {
+        let appPath = path.join(target, ".vscode", "ext_jss", "apps", id);
+
+        if (!await fsw.exists(appPath)) {
+            appPath = path.join(_storageRootPath, id);
+        }
+        if (!await fsw.exists(appPath)) {
             throw new h.ExtError(ConfigurationCode.NotFoundConfig);
         }
 
