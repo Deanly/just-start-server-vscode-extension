@@ -92,7 +92,8 @@ export async function multiStepInput(context: ExtensionContext) {
                 state.step = 1;
                 state.totalSteps = 3;
                 state.selectedWorkspace = {
-                    ...vscode.workspace.workspaceFolders![0],
+                    uri: vscode.workspace.workspaceFolders![0].uri,
+                    index: vscode.workspace.workspaceFolders![0].index,
                     label: vscode.workspace.workspaceFolders![0].name
                 };
                 return (input: MultiStepInput) => pickApplicationSource(input, state);
