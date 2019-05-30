@@ -276,7 +276,7 @@ export namespace network {
 
         if (typeof progress !== "function") { progress = function () { return true; }; }
 
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             const writer = fs.createWriteStream(path);
             let before = 0;
             writer.on("drain", () => {
@@ -285,7 +285,7 @@ export namespace network {
                 }
                 before = writer.bytesWritten;
             });
-            writer.on("finish", resolve);
+            writer.on("finish", () => resolve(void 0));
             writer.on("error", reject);
 
             response.data.pipe(writer);

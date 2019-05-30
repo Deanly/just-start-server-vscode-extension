@@ -2,7 +2,7 @@
 
 import { ConfigurationAccessor, accessor, ConfigApplication, Workspace } from "./configuration";
 
-import { h, fsw } from "../core/supports";
+import { h } from "../core/supports";
 import Tomcat from "../apps/Tomcat";
 import SpringBoot from "../apps/SpringBoot";
 import { OutputChannel, Uri } from "vscode";
