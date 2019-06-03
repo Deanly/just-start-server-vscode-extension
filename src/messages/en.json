@@ -18,6 +18,7 @@
     "E_AP_IACR": "Inaccessible resources",
     "E_AP_IVIR": "Invalid internal resource",
     "E_AP_FSVC": "Failed to create server",
+    "E_AP_NFDT": "Deployment failed",
 
     "M_AP_DPLY": "Deployment complete",
 

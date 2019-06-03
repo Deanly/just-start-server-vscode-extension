@@ -138,7 +138,6 @@ export async function multiStepInput(context: ExtensionContext) {
             vscode.window.showInformationMessage(getMessage("M_SP_NSLT"));
             return;
         }
-
         state.valid = await validateExecutableApplication(state.selectedAppSource!.type!, uris[0].path);
         state.selectedAppSource!.sourcePath = uris[0].path;
     }
@@ -167,7 +166,7 @@ export async function multiStepInput(context: ExtensionContext) {
             location: vscode.ProgressLocation.Notification,
             title: getMessage("M_TP_DNLD")
         }, async (progress, token) => {
-            appPath = path.join(state.selectedWorkspace!.uri.path, ".vscode", "ext_jss", "temp_dn", Date.now().toString(36));
+            appPath = path.join(state.selectedWorkspace!.uri.fsPath, ".vscode", "ext_jss", "temp_dn", Date.now().toString(36));
             fsw.mkdirSync(appPath);
             state.selectedAppSource!.sourcePath = appPath;
             try {

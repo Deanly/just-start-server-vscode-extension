@@ -83,6 +83,7 @@ export const ApplicationCode = {
     InaccessibleResources: "E_AP_IACR",
     InvalidInternalResource: "E_AP_IVIR",
     FailedCreateServer: "E_AP_FSVC",
+    NotFoundDeployTool: "E_AP_NFDT"
 }
 
 export namespace container {
