@@ -194,7 +194,7 @@ export class ServerTreeDataProvider implements vscode.TreeDataProvider<ServerEnt
             throw new h.ExtError(ApplicationCode.FailedCreateServer);
         }
 
-        const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.path };
+        const workspace: Workspace = { name: state.selectedWorkspace.label, path: state.selectedWorkspace.uri.fsPath };
 
         try {
             await this._createAndRegisterApp(srcPath, state.selectedAppSource.type, workspace);

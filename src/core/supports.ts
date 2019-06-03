@@ -83,7 +83,6 @@ export namespace fsw {
         flag?: string | undefined;
     }): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            // console.log(new Date(), "writeFile", content.toString());
             fs.writeFile(path, content, options, err => handleResult(resolve, reject, err, void 0));
         });
     }
@@ -128,14 +127,14 @@ export namespace fsw {
         return void 0;
     }
 
-    export function mkdir(path: string): Promise<void> {
+    export function mkdir(p: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            mkdirp(path, err => handleResult(resolve, reject, err, void 0));
+            mkdirp(p, err => handleResult(resolve, reject, err, void 0));
         });
     }
 
-    export function mkdirSync(path: string): void {
-        mkdirp.sync(path);
+    export function mkdirSync(p: string): void {
+        mkdirp.sync(p);
         return void 0;
     }
 
@@ -189,7 +188,7 @@ export namespace fsw {
         });
     }
 
-    export function findFilePath(basedir: string, filename: string ): Promise<string> {
+    export function findFilePath(basedir: string, filename: string): Promise<string> {
         return new Promise((resolve, reject) => {
             let result: string | undefined;
             const recursive = async function (_path: string): Promise<void> {
@@ -358,7 +357,7 @@ export namespace util {
         });
     }
 
-    export function unzip (zipPath: string, outputPath: string) {
+    export function unzip(zipPath: string, outputPath: string) {
         return new Promise((resolve, reject) => {
             const stream = fs.createReadStream(zipPath);
             stream.on("end", resolve);
@@ -400,8 +399,8 @@ export namespace h {
         }
     }
 
-    export function matchError(error: ExtError|Error, code: string): boolean {
-            if (error instanceof Error) { return false; }
-            return ((error as ExtError).msg === code) || ((error as ExtError).code === code);
-        }
+    export function matchError(error: ExtError | Error, code: string): boolean {
+        if (error instanceof Error) { return false; }
+        return ((error as ExtError).msg === code) || ((error as ExtError).code === code);
+    }
 }

@@ -32,7 +32,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 { key: "SHUTDOWN_PORT", value: "any", changeable: false },
             ],
         });
-        this.rootPath = workspaceUri.path;
+        this.rootPath = workspaceUri.fsPath;
         this.command = { maven: "", gradle: "" };
     }
 
@@ -97,20 +97,23 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         try {
             const output: Array<string> = [];
 
-
             if (pomXml.replace(/(\s)|(\>)/gi, "").toLowerCase().match(/packagingwar/)) {
-                await util.executeChildProcess(
-                    this.command.maven,
-                    { shell: true },
-                    ["package", `--file="${this.workspaceUri.path}"`],
-                    output, outputChannel);
+                try {
+                    await util.executeChildProcess(
+                        this.command.maven,
+                        { shell: true },
+                        ["package", `--file="${this.rootPath}"`],
+                        output, outputChannel);
+                } catch (e) {
+                    throw new h.ExtError("mvn", ApplicationCode.NotFoundDeployTool);
+                }
                 const findWarLine = output.join("").split("\n").find(line => !!line.match(/Building war/));
                 if (!findWarLine) { throw new Error("Packaging Failed"); }
 
                 const words = findWarLine.split(":");
                 return path.normalize(words[words.length - 1].replace(/(^\s*)|(\s*$)/gi, ""));
             } else {
-                throw new h.ExtError("No war-package setting in 'pom.xml'", ApplicationCode.NotMatchConfDeploy);
+                throw new h.ExtError("Need war-package setting in 'pom.xml'", ApplicationCode.NotMatchConfDeploy);
             }
         } catch (e) {
             if (e instanceof h.ExtError) { throw e; }
@@ -123,11 +126,15 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         try { buildGradle = (await fsw.readfile(path.join(this.rootPath, "build.gradle"))).toString(); } catch (ignore) { return ""; }
         try {
             if (buildGradle.replace(/(\')|(\")|(\s)/gi, "").toLowerCase().match(/applyplugin:war/)) {
-                await util.executeChildProcess(
-                    this.command.gradle,
-                    { shell: true },
-                    ["build", `-b="${path.join(this.rootPath, "build.gradle")}"`],
-                    [], outputChannel);
+                try {
+                    await util.executeChildProcess(
+                        this.command.gradle,
+                        { shell: true },
+                        ["build", `-b="${path.join(this.rootPath, "build.gradle")}"`],
+                        [], outputChannel);
+                } catch (e) {
+                    throw new h.ExtError("gradle", ApplicationCode.NotFoundDeployTool);
+                }
                 return await fsw.findFilePath(path.join(this.rootPath), "*.war");
             } else {
                 throw new h.ExtError("No war-plugin setting in 'build.gradle'", ApplicationCode.NotMatchConfDeploy);
@@ -154,6 +161,9 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
                 }
             }
+        }
+        if (!(await fsw.readable(war))) {
+            throw new h.ExtError(ApplicationCode.NotFoundTargetDeploy);
         }
 
         await this.saveConfigProperties([{ key: "war_path", value: war }]);
@@ -240,7 +250,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             args.push(`-agentlib:jdwp=transport=dt_socket,suspend=n,server=y,address=localhost:${debugPort}`);
         }
 
-        args.push("org.apache.catalina.startup.Bootstrap \"$@\"");
+        args.push(`org.apache.catalina.startup.Bootstrap ${util.getOsType() === util.OsType.WINDOWS_NT ? "" : "$@"}`);
 
         this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel, true);
     }
@@ -248,9 +258,10 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     async stop(outputChannel?: OutputChannel): Promise<void> {
         if (!this._process) { throw new h.ExtError(ApplicationCode.FatalFailure); }
         let trying = 0, succeed = false, err;
+
         while (!succeed) {
             try {
-                this._process.kill();
+                this._process.kill("SIGINT");
                 if (this._process.killed) {
                     succeed = true;
                     if (outputChannel) {
@@ -263,6 +274,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 if (trying > 4) { return Promise.reject(err); }
                 else { await util.setTimeoutPromise(() => { }, 3000); }
             }
+            await util.setTimeoutPromise(() => { }, 3000);
         }
         Promise.resolve(void 0);
     }
@@ -282,6 +294,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             if (!(await fsw.readable(path.join(this.getAppPath(), "bin", "tomcat-juli.jar")))) { return false; }
             if (!(await fsw.readable(path.join(this.getAppPath(), "lib")))) { return false; }
         } catch (ignore) {
+            console.error(ignore);
             return false;
         }
         return true;
