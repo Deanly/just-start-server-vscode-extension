@@ -262,7 +262,8 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         while (!succeed) {
             try {
                 this._process.kill("SIGINT");
-                if (this._process.killed) {
+                // if (this._process.killed) {
+                if (await network.checkAvailablePort(this.getServicePort())) {
                     succeed = true;
                     if (outputChannel) {
                         outputChannel.appendLine("stopped server.");
