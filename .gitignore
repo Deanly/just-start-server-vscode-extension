@@ -8,7 +8,6 @@ test/demo/*
 .settings/
 /target
 *.iml
-package-lock.json
 *.p12
 .DS_Store
 /dist/
