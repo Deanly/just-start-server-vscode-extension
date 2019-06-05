@@ -15,12 +15,12 @@ interface AppPickItem extends QuickPickItem {
 
 const applicationTypes: AppPickItem[] = [
     { label: "Tomcat", type: AppTypes.TOMCAT },
-    { label: "Spring Boot", type: AppTypes.SPRING_BOOT },
+    // { label: "Spring Boot", type: AppTypes.SPRING_BOOT },
 ];
 
 const applicationSources: AppPickItem[] = [
     { label: "Manually selecting a server folder...", type: AppTypes.TOMCAT },
-    { label: "Manually selecting a server folder...", type: AppTypes.SPRING_BOOT },
+    // { label: "Manually selecting a server folder...", type: AppTypes.SPRING_BOOT },
     { label: "Tomcat-9.0.20", version: "9.0.20", type: AppTypes.TOMCAT, download: "http://apache.mirror.cdnetworks.com/tomcat/tomcat-9/v9.0.20/bin/apache-tomcat-9.0.20.zip" },
     { label: "Tomcat-8.5.41", version: "8.5.41", type: AppTypes.TOMCAT, download: "http://apache.mirror.cdnetworks.com/tomcat/tomcat-8/v8.5.41/bin/apache-tomcat-8.5.41.zip" },
 ];
