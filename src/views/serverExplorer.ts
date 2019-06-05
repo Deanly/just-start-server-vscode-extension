@@ -107,6 +107,8 @@ export class ServerEntry extends vscode.TreeItem {
         } catch (e) {
             this.busy = false;
             this.server.status = prevStatus;
+            this.redraw();
+            this.server.stop(this.outputChannel);
             throw e;
         }
         this.redraw();

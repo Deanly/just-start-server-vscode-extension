@@ -230,7 +230,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         };
 
         if (!await debug.startDebugging(workspace.getWorkspaceFolder(this.workspaceUri), config)) {
-            throw new h.ExtError(ApplicationCode.FatalFailure);
+            throw new h.ExtError("Debugger for Java", ApplicationCode.RequiredInstallTools);
         }
     }
 
