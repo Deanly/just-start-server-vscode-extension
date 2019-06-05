@@ -234,7 +234,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         }
     }
 
-    private async execProcess(outputChannel: OutputChannel, debugPort?: number): Promise<void> {
+    private async execProcess(outputChannel: OutputChannel, debugPort?: number, stop?: boolean): Promise<void> {
         const args = [
             `-classpath "${path.join(this.getAppPath(), "bin", "bootstrap.jar")}${path.delimiter}${path.join(this.getAppPath(), "bin", "tomcat-juli.jar")}"`,
             `-Dcatalina.base="${this.getAppPath()}"`,
@@ -254,16 +254,20 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
         args.push(`org.apache.catalina.startup.Bootstrap ${util.getOsType() === util.OsType.WINDOWS_NT ? "" : "$@"}`);
 
+        if (stop) { args.push("stop"); }
+
         this._process = await util.executeChildProcess("java", { shell: true }, args, [], outputChannel, true);
     }
 
-    async stop(outputChannel?: OutputChannel): Promise<void> {
+    async stop(outputChannel: OutputChannel): Promise<void> {
         if (!this._process) { throw new h.ExtError(ApplicationCode.FatalFailure); }
         let trying = 0, succeed = false, err;
 
         while (!succeed) {
             try {
-                this._process.kill("SIGINT");
+                await this.execProcess(outputChannel, undefined, true);
+
+                // this._process.kill("SIGINT");
                 // if (this._process.killed) {
                 if (await network.checkAvailablePort(this.getServicePort())) {
                     succeed = true;
