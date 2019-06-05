@@ -261,16 +261,19 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         if (!this._process) { throw new h.ExtError(ApplicationCode.FatalFailure); }
         let trying = 0, succeed = false, err;
 
+        await this.execProcess(outputChannel, undefined, true);
         while (!succeed) {
             try {
-                await this.execProcess(outputChannel, undefined, true);
-
-                // this._process.kill("SIGINT");
-                // if (this._process.killed) {
                 if (await network.checkAvailablePort(this.getServicePort())) {
                     succeed = true;
                     if (outputChannel) {
                         outputChannel.appendLine("stopped server.");
+                    }
+                } else {
+                    await util.setTimeoutPromise(() => { }, 3000);
+                    if (trying++ > 4) {
+                        this._process.kill();
+                        return Promise.reject(new h.ExtError(ApplicationCode.FatalFailure));
                     }
                 }
             } catch (e) {
@@ -279,7 +282,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
                 if (trying > 4) { return Promise.reject(err); }
                 else { await util.setTimeoutPromise(() => { }, 3000); }
             }
-            await util.setTimeoutPromise(() => { }, 3000);
         }
         Promise.resolve(void 0);
     }
