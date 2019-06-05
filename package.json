@@ -3,6 +3,7 @@
     "displayName": "Just Start Server",
     "description": "Web development and debugger using tomcat server in vscode",
     "version": "0.1.0",
+    "license": "LICENSE.txt",
     "publisher": "Deanly",
     "engines": {
         "vscode": "^1.26.0"
