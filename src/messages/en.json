@@ -24,6 +24,7 @@
 
     "M_SP_NSLT": "No Selected",
     "M_SP_CNCD": "Canceled",
+    "M_SP_SELT": "Manually selecting a server folder...",
 
     "M_TP_COPY": "Copying..",
     "M_TP_DNLD": "Downloading..",
