@@ -19,6 +19,7 @@
     "E_AP_IVIR": "Invalid internal resource",
     "E_AP_FSVC": "Failed to create server",
     "E_AP_NFDT": "Deployment failed",
+    "E_AP_NTRD": "Installation of Tools is required",
 
     "M_AP_DPLY": "Deployment complete",
 
