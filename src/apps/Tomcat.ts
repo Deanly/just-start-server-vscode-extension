@@ -148,7 +148,7 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     async deploy(outputChannel?: OutputChannel): Promise<void> {
         let war = await this.packageByMaven(outputChannel);
         if (!war) { war = await this.packageByGradle(outputChannel); }
-        if (!war) { war = path.join(this.rootPath, this.getProperty("war_path")!.value); }
+        if (!war) { war = path.join(this.getProperty("war_path")!.value); }
 
         if (!(await fsw.readable(war))) {
             if (await fsw.readable(path.join(this.rootPath, "target"))) {
@@ -245,6 +245,8 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             // `--add-opens=java.base/java.io=ALL-UNNAMED`,
             // `--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED`,
         ];
+
+        console.log(args);
 
         if (debugPort) {
             args.push(`-agentlib:jdwp=transport=dt_socket,suspend=n,server=y,address=localhost:${debugPort}`);
