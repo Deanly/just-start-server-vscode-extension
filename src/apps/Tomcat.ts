@@ -246,8 +246,6 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             // `--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED`,
         ];
 
-        console.log(args);
-
         if (debugPort) {
             args.push(`-agentlib:jdwp=transport=dt_socket,suspend=n,server=y,address=localhost:${debugPort}`);
         }
