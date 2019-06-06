@@ -6,7 +6,7 @@ Currently, only Tomcat server is supported.
 
 
 ## Usage
-
+![usage](docs/images/usage-01.gif)
 
 ## Features
 * Download and install Tomcat Server
@@ -24,14 +24,14 @@ Currently, only Tomcat server is supported.
 * [Gradle](https://gradle.org/)
 
 ## Known Issues
-* 
 
 ## Release Notes
 
 ### 0.1.0
-
 * Initial release
 * Tomcat Server features
 
+## Donate
+https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GYMHWSJUTE898
 
 -----------------------------------------------------------------------------------------------------------
