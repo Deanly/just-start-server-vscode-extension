@@ -6,7 +6,7 @@ Currently, only Tomcat server is supported.
 
 
 ## Usage
-![usage](docs/images/usage-01.gif)
+![demo01](https://github.com/Deanly/just-start-server-vscode-extension/blob/master/docs/images/usage-01.gif)
 
 ## Features
 * Download and install Tomcat Server
