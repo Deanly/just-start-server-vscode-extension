@@ -2,7 +2,7 @@
     "name": "vscode-just-start-server",
     "displayName": "Just Start Server",
     "description": "Web development and debugger using tomcat server in vscode",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "license": "LICENSE.txt",
     "author": {
         "name": "NamYoung Lee"
