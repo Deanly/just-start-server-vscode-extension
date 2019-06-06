@@ -11,7 +11,7 @@
         "type": "git",
         "url": "https://github.com/Deanly/just-start-server-vscode-extension"
     },
-    "publisher": "Deanly",
+    "publisher": "deanlee",
     "bugs": "https://github.com/Deanly/just-start-server-vscode-extension/issues",
     "engines": {
         "vscode": "^1.26.0"
@@ -114,14 +114,6 @@
             {
                 "command": "serverExplorer.delServer",
                 "title": "Delete"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "serverExplorer.rerunEntry",
-                "key": "f5",
-                "mac": "f5",
-                "when": "editorTextFocus"
             }
         ],
         "menus": {
