@@ -4,13 +4,22 @@
     "description": "Web development and debugger using tomcat server in vscode",
     "version": "0.1.0",
     "license": "LICENSE.txt",
+    "author": {
+        "name": "NamYoung Lee"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Deanly/just-start-server-vscode-extension"
+    },
     "publisher": "Deanly",
+    "bugs": "https://github.com/Deanly/just-start-server-vscode-extension/issues",
     "engines": {
         "vscode": "^1.26.0"
     },
     "categories": [
-        "Other"
+        "Debuggers"
     ],
+    "keywords": ["tomcat", "server"],
     "activationEvents": [
         "onView:serverExplorer"
     ],
