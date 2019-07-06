@@ -27,9 +27,11 @@ Currently, only Tomcat server is supported.
 
 ## Release Notes
 
-### 0.1.0
-* Initial release
-* Tomcat Server features
+### 0.2.0
+* Added an option to disable builds or deploys.
+
+### 0.1.1
+* Removing key-binding for development and test.
 
 ## Donate
 https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GYMHWSJUTE898
