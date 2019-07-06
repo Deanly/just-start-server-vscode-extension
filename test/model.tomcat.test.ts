@@ -18,13 +18,13 @@ suite.skip("apps.tomcat", function () {
             name: "test",
             type: "TOMCAT",
             appPath: appTomcat8,
-            properties: [],
+            properties: tomcat.config.properties,
             workspace: { name: "test m 01", path: demoPomProject1.path }
         });
         await tomcat.init();
         await tomcat.saveConfig();
         await tomcat.deploy();
-    }).timeout(10000);
+    }).timeout(120000);
 
     test("deploy gradle war 01", async function () {
         const tomcat = new Tomcat("test01", demoGradleProject1);
@@ -33,14 +33,14 @@ suite.skip("apps.tomcat", function () {
             name: "test",
             type: "TOMCAT",
             appPath: appTomcat8,
-            properties: [],
+            properties: tomcat.config.properties,
             workspace: { name: "test g 01", path: demoGradleProject1.path }
         });
 
         await tomcat.init();
         await tomcat.saveConfig();
         await tomcat.deploy();
-    }).timeout(20000);
+    }).timeout(120000);
 
     test("deploy gradle war 02", async function () {
         const tomcat = new Tomcat("test01", demoGradleProject2);
@@ -49,12 +49,12 @@ suite.skip("apps.tomcat", function () {
             name: "test",
             type: "TOMCAT",
             appPath: appTomcat8,
-            properties: [],
+            properties: tomcat.config.properties,
             workspace: { name: "test g 02", path: demoGradleProject2.path }
         });
 
         await tomcat.init();
         await tomcat.saveConfig();
         await tomcat.deploy();
-    }).timeout(20000);
+    }).timeout(120000);
 });

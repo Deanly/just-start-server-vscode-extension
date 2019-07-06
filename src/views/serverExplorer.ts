@@ -92,9 +92,6 @@ export class ServerEntry extends vscode.TreeItem {
             this.redraw();
             this.outputChannel.clear();
             await this.server.deploy(this.outputChannel);
-            this.outputChannel.appendLine("");
-            this.outputChannel.appendLine(getMessage("M_AP_DPLY"));
-            this.outputChannel.appendLine("");
             await util.setTimeoutPromise(() => { }, 1000);
             if (isDebug) {
                 await this.server.debug(this.outputChannel);

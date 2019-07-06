@@ -22,6 +22,7 @@
     "E_AP_NTRD": "Installation of Tools is required",
 
     "M_AP_DPLY": "Deployment complete",
+    "M_AP_BULD": "Build complete",
 
     "M_SP_NSLT": "No Selected",
     "M_SP_CNCD": "Canceled",
