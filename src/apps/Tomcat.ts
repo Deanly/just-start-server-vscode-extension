@@ -5,6 +5,7 @@ import { IRunnable, AppTypes, Status, ApplicationCode } from "../core/applicatio
 import { ConfigurationAccessor, accessor } from "../core/configuration";
 import { OutputChannel, DebugConfiguration, debug, workspace, Uri } from "vscode";
 import { ChildProcess } from "child_process";
+import { getMessage } from "../messages";
 
 export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
@@ -25,11 +26,15 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             type: AppTypes[AppTypes.TOMCAT],
             name: "Tomcat",
             properties: [
-                { key: "port", value: "8080", changeable: true },
-                { key: "war_path", value: "target/*.war", changeable: true },
-                { key: "AJP_PORT", value: "any", changeable: false },
-                { key: "REDIRECT_PORT", value: "any", changeable: false },
-                { key: "SHUTDOWN_PORT", value: "any", changeable: false },
+                { key: "", value: "", type: "line" },
+                { key: "port", value: "8080", type: "number", changeable: true },
+                { key: "deploy", value: "true", type: "boolean", changeable: true },
+                { key: "build", value: "true", type: "boolean", changeable: true },
+                { key: "war_path", value: "target/*.war", type: "string", changeable: true },
+                { key: "", value: "", type: "line" },
+                { key: "AJP_PORT", value: "any", type: "number", changeable: false },
+                { key: "REDIRECT_PORT", value: "any", type: "number", changeable: false },
+                { key: "SHUTDOWN_PORT", value: "any", type: "number", changeable: false },
             ],
         });
         this.rootPath = workspaceUri.fsPath;
@@ -146,8 +151,21 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
     }
 
     async deploy(outputChannel?: OutputChannel): Promise<void> {
-        let war = await this.packageByMaven(outputChannel);
-        if (!war) { war = await this.packageByGradle(outputChannel); }
+        const propDeploy = this.getProperty("deploy")
+            , propBuild = this.getProperty("build");
+
+        if (propDeploy !== undefined && propDeploy.value === "false") { return; }
+
+        let war;
+        if (propBuild !== undefined && propBuild.value === "true") {
+            war = await this.packageByMaven(outputChannel);
+            if (!war) { war = await this.packageByGradle(outputChannel); }
+            if (war && outputChannel) {
+                outputChannel.appendLine("");
+                outputChannel.appendLine(getMessage("M_AP_BULD"));
+            }
+        }
+
         if (!war) { war = path.join(this.getProperty("war_path")!.value); }
 
         if (!(await fsw.readable(war))) {
@@ -166,11 +184,17 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
             throw new h.ExtError(ApplicationCode.NotFoundTargetDeploy);
         }
 
-        await this.saveConfigProperties([{ key: "war_path", value: war }]);
+        await this.saveConfigProperties([{ key: "war_path", value: war, type: "string" }]);
         const webapps = path.join(this.getAppPath(), "webapps");
         await fsw.rmrf(webapps);
         await fsw.mkdir(webapps);
         await fsw.copyFile(war, path.join(webapps, "ROOT.war"));
+
+        if (outputChannel) {
+            outputChannel.appendLine("");
+            outputChannel.appendLine(getMessage("M_AP_DPLY"));
+            outputChannel.appendLine("");
+        }
 
         return void 0;
     }
@@ -188,9 +212,9 @@ export default class Tomcat extends ConfigurationAccessor implements IRunnable {
         await serverxml.save();
 
         await this.saveConfigProperties([
-            { key: "SHUTDOWN_PORT", value: ports[2].toString() },
-            { key: "AJP_PORT", value: ports[0].toString() },
-            { key: "REDIRECT_PORT", value: ports[1].toString() }
+            { key: "SHUTDOWN_PORT", value: ports[2].toString(), type: "number" },
+            { key: "AJP_PORT", value: ports[0].toString(), type: "number" },
+            { key: "REDIRECT_PORT", value: ports[1].toString(), type: "number" }
         ], true);
     }
 
