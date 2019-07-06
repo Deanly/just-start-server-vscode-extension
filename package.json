@@ -64,6 +64,10 @@
                 }
             },
             {
+                "command": "propertyEntry.toggleEntry",
+                "title": "Toggle"
+            },
+            {
                 "command": "serverExplorer.refresh",
                 "title": "Refresh",
                 "icon": {
