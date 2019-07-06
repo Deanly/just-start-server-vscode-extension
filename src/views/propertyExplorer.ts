@@ -4,6 +4,12 @@ import { ServerEntry } from "./serverExplorer";
 
 export class PropertyEntry extends vscode.TreeItem {
 
+    command = {
+        title: "Toggle",
+        command: "propertyEntry.toggleEntry",
+        arguments: [this],
+    };
+
     constructor (
         protected readonly context: vscode.ExtensionContext,
         protected readonly onDidChangeTreeData: vscode.EventEmitter<PropertyEntry|null|undefined>,
@@ -22,7 +28,28 @@ export class PropertyEntry extends vscode.TreeItem {
     set label (ignore) { }
 
     get contextValue () {
-        return this.property.changeable ? "edit" : "no";
+        if (this.property.changeable) {
+            switch (this.property.type) {
+                case "boolean":
+                    return "toggle";
+                case "string":
+                case "number":
+                default:
+                    return "edit";
+            }
+        } else {
+            return "no";
+        }
+    }
+
+    public async toggleValue () {
+        if (this.accessor === null) { return; }
+
+        if (this.property.type === "boolean") {
+            this.property.value = this.property.value === "true" ? "false" : "true";
+            await this.accessor.saveConfigProperties([this.property]);
+            this.onDidChangeTreeData.fire(this);
+        }
     }
 
     public async changeValue () {
@@ -73,14 +100,14 @@ export class PropertyTreeDataProvider implements vscode.TreeDataProvider<Propert
                     new PropertyEntry(
                         this.context,
                         this._onDidChangeTreeData,
-                        { key: element.label!, value: "", changeable: true },
+                        { key: element.label!, value: "", type: "string", changeable: true },
                         element.getServer(),
                         { isTitle: true, redrawEmitter: element.onDidChangeTreeData }
                     ),
                     new PropertyEntry(
                         this.context,
                         this._onDidChangeTreeData,
-                        { key: element.getServer().getWorkspace()!.name, value: "", changeable: false },
+                        { key: element.getServer().getWorkspace()!.name, value: "", type: "string", changeable: false },
                         element.getServer(),
                     )
                 );

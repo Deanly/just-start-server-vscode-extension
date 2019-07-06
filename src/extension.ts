@@ -29,6 +29,7 @@ export function activate (context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.window.registerTreeDataProvider("propertyExplorer", propertyTreeDataProvider));
     context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.editEntry", handle(async (entry: PropertyEntry) => await entry.changeValue())));
     context.subscriptions.push(vscode.commands.registerCommand("propertyExplorer.refreshEntry", handle(async () => await propertyTreeDataProvider.refresh())));
+    context.subscriptions.push(vscode.commands.registerCommand("propertyEntry.toggleEntry", handle(async (entry: PropertyEntry) => await entry.toggleValue())));
 
     let currentEntry: ServerEntry;
     context.subscriptions.push(vscode.window.registerTreeDataProvider("serverExplorer", serverTreeDataProvider));

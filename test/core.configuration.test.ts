@@ -14,7 +14,7 @@ class TestIns extends here.ConfigurationAccessor {
             type: "TEST_TYPE",
             name: "Hi",
             properties: [
-                { key: "hello", value: "world", changeable: true },
+                { key: "hello", value: "world", type: "string", changeable: true },
             ],
             workspace: { name: "test", path: srcPath }
         });
@@ -82,10 +82,12 @@ suite("core.configuration", function () {
             await ins.saveConfigProperties([{
                 key: "test",
                 value: "123",
+                type: "number",
                 changeable: true
             }, {
                 key: "test",
-                value: "567"
+                value: "567",
+                type: "number"
             }]);
             const prop = await ins.getProperty("test");
             if (!prop) { throw new Error("prop undefined"); }
@@ -100,10 +102,12 @@ suite("core.configuration", function () {
             await ins.saveConfigProperties([{
                 key: "test2",
                 value: "123",
+                type: "number",
                 changeable: false
             }, {
                 key: "test2",
                 value: "456",
+                type: "number",
                 changeable: true
             }]);
         } catch (e) {

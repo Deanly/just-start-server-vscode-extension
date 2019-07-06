@@ -6,6 +6,7 @@ import { fsw, h } from "./supports";
 export interface ConfigProperty {
     key: string;
     value: string;
+    type: string;
     changeable?: boolean;
     description?: string;
 }

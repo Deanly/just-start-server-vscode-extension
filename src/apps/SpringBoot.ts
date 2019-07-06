@@ -15,7 +15,7 @@ export default class SpringBoot extends ConfigurationAccessor implements IRunnab
             type: AppTypes[AppTypes.SPRING_BOOT],
             name: "SpringBoot",
             properties: [
-                { key: "hi", value: "test", changeable: true },
+                { key: "hi", value: "test", type: "string", changeable: true },
             ],
         });
     }
