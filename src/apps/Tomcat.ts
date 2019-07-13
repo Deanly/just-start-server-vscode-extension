@@ -7,8 +7,6 @@ import { OutputChannel, DebugConfiguration, debug, workspace, Uri } from "vscode
 import { ChildProcess } from "child_process";
 import { getMessage } from "../messages";
 
-// test
-
 export default class Tomcat extends ConfigurationAccessor implements IRunnable {
 
     protected readonly CONFIG_FILE_PATH = path.join("conf", "server.xml");
