@@ -1,5 +1,5 @@
 import * as path from "path";
-// 첫 feature 등록
+
 import { fsw, util, network, h } from "../core/supports";
 import { IRunnable, AppTypes, Status, ApplicationCode } from "../core/application";
 import { ConfigurationAccessor, accessor } from "../core/configuration";
